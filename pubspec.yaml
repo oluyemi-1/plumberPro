@@ -1,0 +1,68 @@
+name: plumbing_and_heating
+description: "Comprehensive practical training app for plumbers and heating engineers."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_tts: ^4.2.0
+  shared_preferences: ^2.3.0
+  http: ^1.2.0
+  image_picker: ^1.1.2
+  path_provider: ^2.1.4
+  pdf: ^3.11.1
+  printing: ^5.13.1
+  archive: ^3.6.1
+  share_plus: ^10.0.0
+  file_picker: ^8.1.2
+  flutter_local_notifications: ^17.2.3
+  timezone: ^0.9.4
+  flutter_timezone: ^3.0.1
+  record: ^5.1.2
+  audioplayers: ^6.1.0
+  google_mlkit_text_recognition: ^0.13.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.0
+
+# `record 5.2.1` constrains `record_linux` to ^0.7.0, but record_linux 0.7.2
+# is missing methods (`startStream`) that the platform interface added in
+# 1.4.0+. record_linux 1.3.0 implements them — forcing it forward fixes
+# the Android build (Flutter compiles all platform shims, even on Android).
+dependency_overrides:
+  record_linux: ^1.3.0
+
+# Launcher icon — generated with: dart run flutter_launcher_icons
+# Drop a 1024×1024 PNG at assets/branding/icon.png first.
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/branding/icon.png"
+  min_sdk_android: 24
+  adaptive_icon_background: "#0F4C81"
+  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
+
+# Native splash — generated with: dart run flutter_native_splash:create
+# Uses the brand navy as background. Add assets/branding/splash.png (transparent
+# 512×512 logo) for a logo on the splash, or remove the image: line for a plain
+# coloured splash.
+flutter_native_splash:
+  color: "#0F4C81"
+  color_dark: "#0F4C81"
+  image: "assets/branding/splash.png"
+  image_dark: "assets/branding/splash.png"
+  android_12:
+    color: "#0F4C81"
+    image: "assets/branding/splash.png"
+
+flutter:
+  uses-material-design: true

@@ -1,0 +1,22 @@
+# Release-signing credentials. Copy this file to `key.properties` (same
+# directory) and fill it in. The Gradle build picks `key.properties` up
+# automatically; if the file is absent, builds fall back to the debug key.
+#
+# DO NOT commit `key.properties` — it's gitignored. Treat the keystore
+# password like any other secret.
+#
+# To create a release keystore (one-off):
+#
+#   keytool -genkey -v \
+#     -keystore upload.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias upload
+#
+# Move `upload.jks` somewhere safe outside the project tree (Google Play
+# rotates uploads but loses the original keystore = lost forever for that
+# package). Then set storeFile to its absolute path below.
+
+storeFile=/absolute/path/to/upload.jks
+storePassword=replace-me
+keyAlias=upload
+keyPassword=replace-me

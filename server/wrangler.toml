@@ -1,0 +1,17 @@
+name = "plumber-pro-proxy"
+main = "src/worker.ts"
+compatibility_date = "2026-05-01"
+
+# After running `wrangler kv:namespace create RATE_LIMIT_KV`, replace the
+# id below with the value Wrangler prints (without quotes).
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# Optional: tune the default 30 req/min per IP rate limit.
+# [vars]
+# RATE_LIMIT_PER_MIN = "60"
+
+# Secrets are NOT defined here — set them via:
+#   wrangler secret put ANTHROPIC_API_KEY
+#   wrangler secret put APP_SHARED_KEY

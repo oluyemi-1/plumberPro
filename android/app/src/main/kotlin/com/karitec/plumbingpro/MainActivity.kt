@@ -1,4 +1,4 @@
-package com.example.plumbing_and_heating
+package com.karitec.plumbingpro
 
 import io.flutter.embedding.android.FlutterActivity
 

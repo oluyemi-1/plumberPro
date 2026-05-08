@@ -22,7 +22,7 @@ if (hasReleaseKeystore) {
 }
 
 android {
-    namespace = "com.example.plumbing_and_heating"
+    namespace = "com.karitec.plumbingpro"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -39,8 +39,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.plumbing_and_heating"
+        applicationId = "com.karitec.plumbingpro"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
@@ -70,6 +69,13 @@ android {
             } else {
                 signingConfigs.getByName("debug")
             }
+            // Add our custom rules on top of the default optimised ones
+            // so R8 stops failing on the unreferenced ML Kit script
+            // recognizers (see proguard-rules.pro for details).
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

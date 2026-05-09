@@ -26,8 +26,14 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>PipeSmart uses the camera so you can capture photos of installations, faults, and receipts directly into the relevant job, expense, or photo-diagnosis record.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>PipeSmart records short voice notes against the job you're working on so you can capture observations hands-free.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PipeSmart saves annotated photos and exported reports to your photo library when you choose to do so.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PipeSmart accesses your photo library so you can attach pictures to jobs, receipts, and customer records, and run on-device photo diagnostics on issues you're working on.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -328,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final modules = _allModules();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Plumber Pro'),
+        title: const Text('PipeSmart'),
         actions: [
           const _RunningTimerChip(),
           IconButton(

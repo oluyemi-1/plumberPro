@@ -22,7 +22,7 @@ if (hasReleaseKeystore) {
 }
 
 android {
-    namespace = "com.karitec.plumbingpro"
+    namespace = "com.karitec.pipesmart"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -39,7 +39,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.karitec.plumbingpro"
+        applicationId = "com.karitec.pipesmart"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24

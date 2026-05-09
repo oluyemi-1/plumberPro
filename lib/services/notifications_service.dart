@@ -219,7 +219,7 @@ class NotificationsService extends ChangeNotifier {
       );
       await _plugin.zonedSchedule(
         _notificationId,
-        'Plumber Pro',
+        'PipeSmart',
         body,
         _nextOccurrence(),
         details,

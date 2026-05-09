@@ -46,14 +46,14 @@ class BackupService {
     final tmpDir = await getTemporaryDirectory();
     final ts = DateTime.now();
     final fname =
-        'plumber-pro-backup-${ts.year}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}.zip';
+        'pipesmart-backup-${ts.year}-${ts.month.toString().padLeft(2, '0')}-${ts.day.toString().padLeft(2, '0')}.zip';
     final tmp = File('${tmpDir.path}/$fname');
     await tmp.writeAsBytes(result.bytes, flush: true);
     await Share.shareXFiles(
       [XFile(tmp.path, mimeType: 'application/zip', name: fname)],
-      subject: 'Plumber Pro backup',
+      subject: 'PipeSmart backup',
       text:
-          'Plumber Pro app backup. Open Plumber Pro on the new device and tap Restore from backup.',
+          'PipeSmart app backup. Open PipeSmart on the new device and tap Restore from backup.',
     );
     return result;
   }
@@ -79,7 +79,7 @@ class BackupService {
     }
     if (jsonString == null) {
       throw const FormatException(
-          'Not a valid Plumber Pro backup — data.json missing.');
+          'Not a valid PipeSmart backup — data.json missing.');
     }
     final manifest = jsonDecode(jsonString) as Map<String, dynamic>;
     final version = manifest['version'] as int? ?? 0;
@@ -240,7 +240,7 @@ class BackupService {
     final manifest = {
       'version': _kManifestVersion,
       'createdAt': DateTime.now().toIso8601String(),
-      'app': 'Plumber Pro',
+      'app': 'PipeSmart',
       'summary': summary,
       'prefs': prefsMap,
     };

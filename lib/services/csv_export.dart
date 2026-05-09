@@ -140,8 +140,8 @@ class CsvExport {
 
     final tmp = await getTemporaryDirectory();
     final expensesFile =
-        File('${tmp.path}/plumber-pro-expenses-$rangeSlug.csv');
-    final jobsFile = File('${tmp.path}/plumber-pro-jobs-$rangeSlug.csv');
+        File('${tmp.path}/pipesmart-expenses-$rangeSlug.csv');
+    final jobsFile = File('${tmp.path}/pipesmart-jobs-$rangeSlug.csv');
     await expensesFile.writeAsString(expensesCsvStr, flush: true);
     await jobsFile.writeAsString(jobsCsvStr, flush: true);
 
@@ -152,7 +152,7 @@ class CsvExport {
         XFile(jobsFile.path,
             mimeType: 'text/csv', name: jobsFile.uri.pathSegments.last),
       ],
-      subject: 'Plumber Pro CSV export — $rangeSlug',
+      subject: 'PipeSmart CSV export — $rangeSlug',
       text: 'Expenses and jobs exported as CSV. Drop into your accounting '
           'tool or share with your accountant.',
     );
@@ -188,12 +188,12 @@ class CsvExport {
 
     final csvStr = expensesCsv(items, resolveCustomer: lookupCustomer);
     final tmp = await getTemporaryDirectory();
-    final file = File('${tmp.path}/plumber-pro-expenses-$rangeSlug.csv');
+    final file = File('${tmp.path}/pipesmart-expenses-$rangeSlug.csv');
     await file.writeAsString(csvStr, flush: true);
 
     await Share.shareXFiles(
       [XFile(file.path, mimeType: 'text/csv', name: file.uri.pathSegments.last)],
-      subject: 'Plumber Pro expenses — $rangeSlug',
+      subject: 'PipeSmart expenses — $rangeSlug',
       text: 'Expenses exported as CSV.',
     );
   }

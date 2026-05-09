@@ -32,18 +32,18 @@ Future<void> main() async {
   await InventoryService.instance.ensureLoaded();
   // Count today's app-open for streak tracking.
   await ProgressService.instance.recordOpenToday();
-  runApp(const PlumberProApp());
+  runApp(const PipeSmartApp());
 }
 
-class PlumberProApp extends StatelessWidget {
-  const PlumberProApp({super.key});
+class PipeSmartApp extends StatelessWidget {
+  const PipeSmartApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: ThemeService.instance,
       builder: (context, _) => MaterialApp(
-        title: 'Plumber Pro',
+        title: 'PipeSmart',
         debugShowCheckedModeBanner: false,
         theme: buildAppTheme(),
         darkTheme: buildDarkAppTheme(),

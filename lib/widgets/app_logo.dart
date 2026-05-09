@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 
-/// Programmatic Plumber Pro logo.
+/// Programmatic PipeSmart logo.
 ///
 /// Draws a stylised tap + droplet inside a rounded square with a navy → deep
 /// blue gradient. Scales to any size — used on the splash screen, the About
@@ -187,7 +187,7 @@ class AppLogoWordmark extends StatelessWidget {
         AppLogo(size: logoSize),
         SizedBox(height: logoSize * 0.18),
         Text(
-          'Plumber Pro',
+          'PipeSmart',
           style: titleStyle ??
               TextStyle(
                 fontSize: logoSize * 0.32,

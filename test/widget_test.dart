@@ -5,10 +5,10 @@ import 'package:plumbing_and_heating/main.dart';
 
 void main() {
   testWidgets('App boots into the splash screen', (tester) async {
-    await tester.pumpWidget(const PlumberProApp());
+    await tester.pumpWidget(const PipeSmartApp());
     await tester.pump();
     // The branded splash shows the wordmark before routing to onboarding.
-    expect(find.text('Plumber Pro'), findsOneWidget);
+    expect(find.text('PipeSmart'), findsOneWidget);
     expect(find.byType(MaterialApp), findsOneWidget);
     // Drain any pending timers so the test finishes cleanly without
     // chasing the delayed navigation.

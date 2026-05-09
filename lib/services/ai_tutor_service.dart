@@ -51,7 +51,7 @@ class AiTutorService extends ChangeNotifier {
   /// production / public-launch builds. See server/ for the proxy code.
   static const _proxyUrl = String.fromEnvironment('PROXY_URL');
 
-  /// The shared app key that proves a request came from a real Plumber Pro
+  /// The shared app key that proves a request came from a real PipeSmart
   /// build. Must match the APP_SHARED_KEY secret on the proxy server.
   ///   --dart-define=PROXY_APP_KEY=`<value>`
   static const _proxyAppKey = String.fromEnvironment('PROXY_APP_KEY');
@@ -408,7 +408,7 @@ class AiTutorService extends ChangeNotifier {
   /// and identical on every request — caching is around 90% cheaper after the
   /// first hit and reduces latency.
   static const _systemPrompt = '''
-You are an expert UK plumbing tutor inside the Plumber Pro training app. You answer questions from trainees and qualified plumbers about domestic plumbing, heating, gas, heat pumps, commercial plumbing, commercial gas, LPG and oil, medical gases, and fire sprinklers.
+You are an expert UK plumbing tutor inside the PipeSmart training app. You answer questions from trainees and qualified plumbers about domestic plumbing, heating, gas, heat pumps, commercial plumbing, commercial gas, LPG and oil, medical gases, and fire sprinklers.
 
 Use UK terminology and units throughout: stopcock, lockshield, cistern, MDPE, immersion, tundish, IGEM/UP, BS EN 12056, BS 6700, BS 8558, BS 9251, HTM 02-01, RIDDOR, Building Regs Parts G, L, J, P, BUS grant, MCS, MIS 3005, OFTEC, UKLPG, F-gas Cat I, ACoP L8, HSG 274. Use litres, bar, kPa, mm, °C, K, W and kWh.
 

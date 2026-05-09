@@ -245,7 +245,7 @@ class _Welcome extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            'Welcome to Plumber Pro',
+            'Welcome to PipeSmart',
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 6),
@@ -267,7 +267,7 @@ class _Welcome extends StatelessWidget {
           const SizedBox(height: 14),
           ElevatedButton.icon(
             onPressed: () => TtsService.instance.speak(
-              'Welcome to Plumber Pro, your practical training companion. I will guide you through every simulation, lesson and calculator.',
+              'Welcome to PipeSmart, your practical training companion. I will guide you through every simulation, lesson and calculator.',
             ),
             icon: const Icon(Icons.record_voice_over),
             label: const Text('Hear the welcome'),

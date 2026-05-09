@@ -493,7 +493,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 const SizedBox(height: 6),
                 Text(
                   svc.usingProxy
-                      ? 'AI calls route through Plumber Pro\'s server, so no API key is required. You can still paste your own Anthropic key below to use your own quota and billing — that takes priority and goes direct to api.anthropic.com.'
+                      ? 'AI calls route through PipeSmart\'s server, so no API key is required. You can still paste your own Anthropic key below to use your own quota and billing — that takes priority and goes direct to api.anthropic.com.'
                       : svc.usingBakedInKey
                           ? 'This build was compiled with a built-in demo key. Anyone with the APK can extract it — only ship this build to closed testing tracks. You can override with your own key below.'
                           : 'Paste your Anthropic API key to enable the in-app AI tutor. Stored locally on this device only — never sent anywhere except api.anthropic.com.',

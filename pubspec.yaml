@@ -1,5 +1,5 @@
 name: plumbing_and_heating
-description: "Comprehensive practical training app for plumbers and heating engineers."
+description: "PipeSmart — comprehensive practical training and business app for UK plumbers and heating engineers."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -47,6 +47,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/branding/icon.png"
+  # Apple App Store rejects icons with an alpha channel. The generator
+  # flattens transparency for the iOS variants only; Android keeps full
+  # alpha for the adaptive-icon foreground.
+  remove_alpha_ios: true
   min_sdk_android: 24
   adaptive_icon_background: "#0F4C81"
   adaptive_icon_foreground: "assets/branding/icon_foreground.png"

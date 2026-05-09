@@ -58,7 +58,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
     if (_restoring) return;
     final messenger = ScaffoldMessenger.of(context);
     final result = await FilePicker.platform.pickFiles(
-      dialogTitle: 'Pick a Plumber Pro backup zip',
+      dialogTitle: 'Pick a PipeSmart backup zip',
       type: FileType.custom,
       allowedExtensions: const ['zip'],
       withData: true,
@@ -78,7 +78,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
       messenger.showSnackBar(
         const SnackBar(
             content:
-                Text('That zip does not look like a Plumber Pro backup.')),
+                Text('That zip does not look like a PipeSmart backup.')),
       );
       return;
     }

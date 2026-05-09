@@ -38,7 +38,7 @@ class LegalScreen extends StatelessWidget {
                   _LegalSection(
                     title: 'Summary in plain English',
                     body:
-                        'Plumber Pro is designed to work offline as a training and field reference tool. It does not collect any personal data on its own. The only data leaving your device is what you explicitly send when you use the optional AI tutor or photo-diagnosis features, and that goes directly to Anthropic\'s API — not to us.',
+                        'PipeSmart is designed to work offline as a training and field reference tool. It does not collect any personal data on its own. The only data leaving your device is what you explicitly send when you use the optional AI tutor or photo-diagnosis features, and that goes directly to Anthropic\'s API — not to us.',
                   ),
                   _LegalSection(
                     title: 'What is stored on your device',
@@ -99,7 +99,7 @@ class LegalScreen extends StatelessWidget {
                   _LegalSection(
                     title: 'About this app',
                     body:
-                        'Plumber Pro is a study and field reference tool for UK plumbers and apprentices. It is not a substitute for formal training, qualification, manufacturer instructions or the relevant standards and regulations.',
+                        'PipeSmart is a study and field reference tool for UK plumbers and apprentices. It is not a substitute for formal training, qualification, manufacturer instructions or the relevant standards and regulations.',
                   ),
                   _LegalSection(
                     title: 'Not professional advice',

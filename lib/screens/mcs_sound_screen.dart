@@ -112,14 +112,22 @@ class _McsSoundScreenState extends State<McsSoundScreen> {
                   'Straight-line distance to the nearest neighbour habitable window.'),
           const SizedBox(height: 12),
           _section('Reflection conditions'),
-          ...reflectionPresets.map((r) => RadioListTile<ReflectionPreset>(
-                value: r,
-                groupValue: _refl,
-                onChanged: (v) => setState(() => _refl = v ?? _refl),
-                title: Text(r.label),
-                subtitle: Text('+${r.dB.toStringAsFixed(0)} dB'),
-                dense: true,
-              )),
+          RadioGroup<ReflectionPreset>(
+            groupValue: _refl,
+            onChanged: (v) => setState(() => _refl = v ?? _refl),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final r in reflectionPresets)
+                  RadioListTile<ReflectionPreset>(
+                    value: r,
+                    title: Text(r.label),
+                    subtitle: Text('+${r.dB.toStringAsFixed(0)} dB'),
+                    dense: true,
+                  ),
+              ],
+            ),
+          ),
           SwitchListTile(
             value: _facadeReflection,
             onChanged: (v) => setState(() => _facadeReflection = v),

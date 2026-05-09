@@ -284,7 +284,7 @@ class _ExplainerDetailScreenState extends State<_ExplainerDetailScreen> {
                       subtitle: const Text(
                           'Reads more slowly so the customer can follow.'),
                       value: _slowMode,
-                      activeColor: AppColors.primary,
+                      activeThumbColor: AppColors.primary,
                       onChanged: _toggleSlow,
                     ),
                   ],

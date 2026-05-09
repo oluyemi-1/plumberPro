@@ -127,7 +127,7 @@ class _GshpDesignScreenState extends State<GshpDesignScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<SoilType>(
-              value: _soil,
+              initialValue: _soil,
               isExpanded: true,
               decoration: InputDecoration(
                 labelText: 'Soil type',

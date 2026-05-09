@@ -301,7 +301,7 @@ class _EditExpenseScreenState extends State<EditExpenseScreen> {
 
   List<Widget> _buildExpenseFields() => [
         DropdownButtonFormField<String>(
-          value: _category,
+          initialValue: _category,
           decoration: const InputDecoration(
             labelText: 'Category',
             border: OutlineInputBorder(),

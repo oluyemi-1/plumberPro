@@ -545,7 +545,7 @@ class _RadiatorHeatLoadScreenState extends State<RadiatorHeatLoadScreen> {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: _type,
+          initialValue: _type,
           decoration: InputDecoration(
             labelText: 'Room type',
             filled: true,
@@ -784,7 +784,7 @@ class _DrainFallScreenState extends State<DrainFallScreen> {
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: _gradient,
+          initialValue: _gradient,
           decoration: InputDecoration(
             labelText: 'Gradient',
             filled: true,

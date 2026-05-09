@@ -449,22 +449,30 @@ class _QuestionTile extends StatelessWidget {
                 style: const TextStyle(
                     fontWeight: FontWeight.w600, color: AppColors.text)),
           ),
-          for (var i = 0; i < question.options.length; i++)
-            RadioListTile<int>(
-              dense: true,
-              value: i,
-              groupValue: selectedIndex,
-              onChanged: (v) {
-                if (v != null) onSelect(v);
-              },
-              title: Text(question.options[i].label,
-                  style: const TextStyle(color: AppColors.text)),
-              subtitle: Text(
-                'Score ${question.options[i].score} - ${question.options[i].guidance}',
-                style: const TextStyle(color: AppColors.muted, fontSize: 12),
-              ),
-              activeColor: AppColors.accent,
+          RadioGroup<int>(
+            groupValue: selectedIndex,
+            onChanged: (v) {
+              if (v != null) onSelect(v);
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < question.options.length; i++)
+                  RadioListTile<int>(
+                    dense: true,
+                    value: i,
+                    title: Text(question.options[i].label,
+                        style: const TextStyle(color: AppColors.text)),
+                    subtitle: Text(
+                      'Score ${question.options[i].score} - ${question.options[i].guidance}',
+                      style: const TextStyle(
+                          color: AppColors.muted, fontSize: 12),
+                    ),
+                    activeColor: AppColors.accent,
+                  ),
+              ],
             ),
+          ),
         ],
       ),
     );

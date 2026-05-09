@@ -371,7 +371,7 @@ class _DesignBanner extends StatelessWidget {
             ]),
             const SizedBox(height: 10),
             DropdownButtonFormField<String>(
-              value: region,
+              initialValue: region,
               isDense: true,
               decoration: const InputDecoration(
                 labelText: 'Region (CIBSE design OAT)',
@@ -691,7 +691,7 @@ class _RoomEditorScreenState extends State<_RoomEditorScreen> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: _room.type,
+            initialValue: _room.type,
             decoration: const InputDecoration(
               labelText: 'Room type',
               border: OutlineInputBorder(),
@@ -914,7 +914,7 @@ class _UPicker extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: DropdownButtonFormField<String>(
-        value: match.label,
+        initialValue: match.label,
         isDense: true,
         decoration: InputDecoration(
           labelText: '$label (W/m²·K)',

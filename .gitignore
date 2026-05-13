@@ -49,3 +49,6 @@ app.*.map.json
 /android/key.properties
 *.jks
 *.keystore
+
+# Marketing assets (demo videos, screenshots, review notes) — kept locally only.
+/marketing/

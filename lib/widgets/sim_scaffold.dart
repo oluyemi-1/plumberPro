@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../services/tts_service.dart';
 import '../theme.dart';
@@ -47,6 +48,9 @@ class _SimScaffoldState extends State<SimScaffold> {
   @override
   void initState() {
     super.initState();
+    // Keep the screen on while the engineer steps through the simulation —
+    // they are often watching the diagram or listening to TTS hands-free.
+    WakelockPlus.enable();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onStepChanged?.call(_step);
       if (widget.autoPlay) _speakCurrent();
@@ -55,6 +59,7 @@ class _SimScaffoldState extends State<SimScaffold> {
 
   @override
   void dispose() {
+    WakelockPlus.disable();
     TtsService.instance.stop();
     super.dispose();
   }

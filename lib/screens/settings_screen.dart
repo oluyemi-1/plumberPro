@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../services/ai_tutor_service.dart';
 import '../services/diagnostics_service.dart';
 import '../services/notifications_service.dart';
+import '../services/pro_entitlement.dart';
 import '../services/theme_service.dart';
 import '../services/tts_service.dart';
 import '../services/user_profile_service.dart';
+import 'paywall_screen.dart';
 import '../theme.dart';
 import 'backup_restore_screen.dart';
 import 'diagnostics_screen.dart';
@@ -94,6 +96,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const _DailyReminderCard(),
               const SizedBox(height: 12),
               _AiTutorCard(),
+              const SizedBox(height: 12),
+              const _ProCard(),
               const SizedBox(height: 12),
               _SectionCard(
                 title: 'Narration',
@@ -354,6 +358,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProCard extends StatelessWidget {
+  const _ProCard();
+
+  String _formatDate(DateTime when) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${when.day} ${months[when.month - 1]} ${when.year}';
+  }
+
+  String _statusLine(BuildContext context) {
+    final ent = ProEntitlement.instance;
+    if (!ent.isPro) {
+      return 'Free tier — first 3 items of each feature unlocked. Upgrade to Pro for the full library.';
+    }
+    if (ent.isLifetime) {
+      return 'Pro is active (lifetime). All simulators, lessons, quizzes, troubleshooters and job scenarios are unlocked.';
+    }
+    final daysLeft = ent.expiresAt!.difference(DateTime.now()).inDays;
+    final dateStr = _formatDate(ent.expiresAt!);
+    if (daysLeft <= 0) {
+      return 'Pro has expired.';
+    }
+    if (daysLeft <= 14) {
+      return 'Pro active until $dateStr ($daysLeft day${daysLeft == 1 ? '' : 's'} left). Renew to keep full access.';
+    }
+    return 'Pro active until $dateStr. All features unlocked.';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ProEntitlement.instance,
+      builder: (context, _) {
+        final isPro = ProEntitlement.instance.isPro;
+        return _SectionCard(
+          title: 'PipeSmart Pro',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isPro
+                        ? Icons.workspace_premium_rounded
+                        : Icons.lock_rounded,
+                    color: isPro ? Colors.amber.shade700 : AppColors.muted,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _statusLine(context),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (!isPro)
+                FilledButton.icon(
+                  icon: const Icon(Icons.confirmation_number_rounded),
+                  label: const Text('Activate Pro'),
+                  onPressed: () => PaywallScreen.show(context),
+                ),
+              const Divider(height: 24),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: isPro,
+                onChanged: (v) => ProEntitlement.instance.setPro(v),
+                title: const Text('Dev: simulate Pro entitlement'),
+                subtitle: const Text(
+                    'Local-only flag for testing the gated UX (lifetime). Real purchases will replace this.'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../data/troubleshooting_data.dart';
+import '../services/pro_entitlement.dart';
 import '../services/tts_service.dart';
 import '../theme.dart';
+import '../widgets/pro_lock_overlay.dart';
 
 class TroubleshooterScreen extends StatefulWidget {
   const TroubleshooterScreen({super.key});
@@ -60,11 +62,15 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen> {
   @override
   Widget build(BuildContext context) {
     final cases = _filtered;
+    final freeCases =
+        troubleCases.take(ProEntitlement.freeLimit).toSet();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Troubleshooter'),
       ),
-      body: Column(
+      body: AnimatedBuilder(
+        animation: ProEntitlement.instance,
+        builder: (context, _) => Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
@@ -133,7 +139,11 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen> {
                     itemBuilder: (_, i) {
                       final c = cases[i];
                       final color = _systemColor(c.system);
-                      return Card(
+                      final locked = !ProEntitlement.instance.isPro &&
+                          !freeCases.contains(c);
+                      return ProLockOverlay(
+                        locked: locked,
+                        child: Card(
                         margin: const EdgeInsets.only(bottom: 10),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(14),
@@ -199,11 +209,13 @@ class _TroubleshooterScreenState extends State<TroubleshooterScreen> {
                             ),
                           ),
                         ),
+                        ),
                       );
                     },
                   ),
           ),
         ],
+      ),
       ),
     );
   }

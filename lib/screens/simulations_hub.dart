@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../services/pro_entitlement.dart';
 import '../services/progress_service.dart';
 import '../services/tts_service.dart';
+import '../widgets/pro_lock_overlay.dart';
 import '../simulations/cold_water_sim.dart';
 import '../simulations/mains_entry_sim.dart';
 import '../simulations/hot_water_vented_sim.dart';
@@ -11,6 +13,7 @@ import '../simulations/secondary_circulation_sim.dart';
 import '../simulations/solar_thermal_sim.dart';
 import '../simulations/combi_boiler_sim.dart';
 import '../simulations/boiler_cycle_sim.dart';
+import '../simulations/electric_boiler_sim.dart';
 import '../simulations/central_heating_sim.dart';
 import '../simulations/y_plan_heating_sim.dart';
 import '../simulations/underfloor_heating_sim.dart';
@@ -145,6 +148,15 @@ class _SimulationsHubScreenState extends State<SimulationsHubScreen> {
       icon: Icons.device_thermostat,
       accent: AppColors.brass,
       builder: (_) => const BoilerCycleSimScreen(),
+    ),
+    _SimEntry(
+      title: 'Electric boiler cycle',
+      subtitle:
+          'No flame, no flue — pump prove, element staging, overheat lockout.',
+      category: 'Boiler',
+      icon: Icons.electric_bolt,
+      accent: AppColors.primary,
+      builder: (_) => const ElectricBoilerSimScreen(),
     ),
     _SimEntry(
       title: 'S-plan central heating',
@@ -470,6 +482,7 @@ class _SimulationsHubScreenState extends State<SimulationsHubScreen> {
   @override
   Widget build(BuildContext context) {
     final entries = _filtered;
+    final freeEntries = _all.take(ProEntitlement.freeLimit).toSet();
     return Scaffold(
       backgroundColor: AppColors.cardBg,
       appBar: AppBar(
@@ -477,7 +490,9 @@ class _SimulationsHubScreenState extends State<SimulationsHubScreen> {
         backgroundColor: AppColors.primaryDark,
         foregroundColor: Colors.white,
       ),
-      body: LayoutBuilder(
+      body: AnimatedBuilder(
+        animation: ProEntitlement.instance,
+        builder: (context, _) => LayoutBuilder(
         builder: (context, constraints) {
           final w = constraints.maxWidth;
           final cross = w >= 1100 ? 3 : (w >= 720 ? 2 : 1);
@@ -524,9 +539,14 @@ class _SimulationsHubScreenState extends State<SimulationsHubScreen> {
                     ),
                     itemBuilder: (context, index) {
                       final entry = entries[index];
-                      return _SimCard(
-                        entry: entry,
-                        onTap: () => _open(context, entry),
+                      final locked = !ProEntitlement.instance.isPro &&
+                          !freeEntries.contains(entry);
+                      return ProLockOverlay(
+                        locked: locked,
+                        child: _SimCard(
+                          entry: entry,
+                          onTap: () => _open(context, entry),
+                        ),
                       );
                     },
                   ),
@@ -535,6 +555,7 @@ class _SimulationsHubScreenState extends State<SimulationsHubScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

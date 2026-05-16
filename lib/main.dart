@@ -6,6 +6,7 @@ import 'services/expense_service.dart';
 import 'services/inventory_service.dart';
 import 'services/job_template_service.dart';
 import 'services/notifications_service.dart';
+import 'services/pro_entitlement.dart';
 import 'services/progress_service.dart';
 import 'services/quote_service.dart';
 import 'services/reminder_service.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
   await ReminderService.instance.ensureLoaded();
   await QuoteService.instance.ensureLoaded();
   await InventoryService.instance.ensureLoaded();
+  await ProEntitlement.instance.ensureLoaded();
   // Count today's app-open for streak tracking.
   await ProgressService.instance.recordOpenToday();
   runApp(const PipeSmartApp());

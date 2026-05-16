@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../data/quiz_data.dart';
 import '../data/backflow_quiz_data.dart';
+import '../data/electric_boiler_quiz_data.dart';
 import '../data/electrical_quiz_data.dart';
 import '../data/fuels_quiz_data.dart';
 import '../data/renewables_quiz_data.dart';
+import '../services/pro_entitlement.dart';
 import '../services/quiz_stats_service.dart';
 import '../theme.dart';
+import '../widgets/pro_lock_overlay.dart';
 import 'quiz_session_screen.dart';
 
 List<QuizTopic> get _allQuizTopics => [
@@ -15,6 +18,7 @@ List<QuizTopic> get _allQuizTopics => [
       ...renewablesQuizTopics,
       ...fuelsQuizTopics,
       ...backflowQuizTopics,
+      ...electricBoilerQuizTopics,
     ];
 
 class QuizzesScreen extends StatefulWidget {
@@ -89,9 +93,14 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
         ],
       ),
       body: AnimatedBuilder(
-        animation: QuizStatsService.instance,
+        animation: Listenable.merge(
+            [QuizStatsService.instance, ProEntitlement.instance]),
         builder: (context, _) {
           final topics = _filtered;
+          final freeTopicIds = _allQuizTopics
+              .take(ProEntitlement.freeLimit)
+              .map((t) => t.id)
+              .toSet();
           final totalAttempts = _allQuizTopics
               .map((t) => QuizStatsService.instance.statsForCached(t.id))
               .fold<int>(0, (a, s) => a + s.attempts);
@@ -170,21 +179,26 @@ class _QuizzesScreenState extends State<QuizzesScreen> {
                     final t = topics[i];
                     final stats =
                         QuizStatsService.instance.statsForCached(t.id);
-                    return _TopicTile(
-                      topic: t,
-                      stats: stats,
-                      onTap: (mode) async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuizSessionScreen(
-                              topic: t,
-                              mode: mode,
+                    final locked = !ProEntitlement.instance.isPro &&
+                        !freeTopicIds.contains(t.id);
+                    return ProLockOverlay(
+                      locked: locked,
+                      child: _TopicTile(
+                        topic: t,
+                        stats: stats,
+                        onTap: (mode) async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => QuizSessionScreen(
+                                topic: t,
+                                mode: mode,
+                              ),
                             ),
-                          ),
-                        );
-                        if (mounted) setState(() {});
-                      },
+                          );
+                          if (mounted) setState(() {});
+                        },
+                      ),
                     );
                   },
                 ),

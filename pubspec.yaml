@@ -13,6 +13,8 @@ dependencies:
   flutter_tts: ^4.2.0
   shared_preferences: ^2.3.0
   http: ^1.2.0
+  crypto: ^3.0.5
+  wakelock_plus: ^1.2.10
   image_picker: ^1.1.2
   path_provider: ^2.1.4
   pdf: ^3.11.1
@@ -70,3 +72,5 @@ flutter_native_splash:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/tools/

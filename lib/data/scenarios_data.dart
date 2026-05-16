@@ -886,4 +886,357 @@ const jobScenarios = <JobScenario>[
     failOutcome:
         'Customer still has a slow basin or worse, a chemical injury. Get the safety basics right first.',
   ),
+
+  // ─── Electric boiler scenarios ──────────────────────────────────────────
+  JobScenario(
+    id: 'electric_boiler_no_heat_flat',
+    title: 'Top-floor flat, no heat, Elnur Mattira',
+    category: 'Electric boiler',
+    customerBrief:
+        'Tenant in a top-floor one-bed flat called. Heating and hot water both off since this morning. Property has no gas; everything runs from a wall-hung electric boiler in the airing cupboard.',
+    onArrival:
+        'You let yourself in with the agent key. The hallway is cold. The airing cupboard has an Elnur Mattira boiler with a blank display. Below it is a sealed unvented cylinder. There is a single rotary isolator beside the boiler, in the on position.',
+    safetyNote:
+        'Treat the boiler as live until proved dead. The customer cannot tell you whether the upstream consumer unit has tripped.',
+    timeLimitSeconds: 0,
+    steps: [
+      JobStep(
+        prompt: 'Display is blank. What is your first action?',
+        sceneNote: 'No noises. Hallway is cold. Local isolator is on.',
+        options: [
+          JobOption(
+            text:
+                'Open the boiler cover and start probing terminals to find the fault.',
+            feedback:
+                'No isolation, no proving dead — that is a shock risk. Always go to the consumer unit first.',
+            pointsDelta: -3,
+            isDangerous: true,
+          ),
+          JobOption(
+            text:
+                'Go to the consumer unit and check whether the boiler RCBO has tripped.',
+            feedback:
+                'Correct first step — a tripped RCBO is by far the most common reason for a dead display.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text: 'Reset the boiler from the front panel.',
+            feedback: 'The display is blank, so there is no panel to reset.',
+            pointsDelta: -1,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'At the consumer unit you find the boiler RCBO has tripped. What do you do next?',
+        sceneNote:
+            'It is a 40 A type-AC RCBO labelled "boiler". Other circuits look untouched.',
+        options: [
+          JobOption(
+            text:
+                'Reset the RCBO and walk away — job done, just a nuisance trip.',
+            feedback:
+                'Repeated trips can hide a real fault that needs investigating. Resetting once and leaving without watching it under load risks a callback or worse.',
+            pointsDelta: -2,
+          ),
+          JobOption(
+            text:
+                'Reset the RCBO, then go back to the boiler and watch it through one full firing cycle before leaving.',
+            feedback:
+                'Sensible. A tripped device deserves a one-off reset and observation. If it trips again under load the cause is real.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Tape the RCBO closed so it does not trip again and leave.',
+            feedback:
+                'This is dangerous — that RCBO is a safety device. Never defeat it.',
+            pointsDelta: -5,
+            isDangerous: true,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'You reset the RCBO. The boiler fires for thirty seconds and the RCBO trips again. What is the most likely cause?',
+        sceneNote:
+            'You hear a brief contactor click, the pump start, then a loud snap as the RCBO trips.',
+        options: [
+          JobOption(
+            text: 'The pump is taking too much starting current.',
+            feedback:
+                'Pump starting current is well within the RCBO trip curve. Rapid trip on energising is almost always earth leakage from the element.',
+            pointsDelta: -1,
+          ),
+          JobOption(
+            text:
+                'Earth leakage from a degraded element seal. Insulation resistance test on each element will confirm.',
+            feedback:
+                'Yes. A nearly-instant trip on firing with no overcurrent fault is a textbook earth-leakage signature. An insulation test at five hundred volts to earth will identify the faulty element.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text: 'The customer is on a faulty tariff meter.',
+            feedback: 'Tariffs have nothing to do with earth fault protection.',
+            pointsDelta: -2,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'An insulation test confirms one element has broken down to earth. The boiler is six years old. What do you advise the customer?',
+        sceneNote:
+            'You have the manufacturer\'s replacement element on the van.',
+        options: [
+          JobOption(
+            text:
+                'Replace just the failed element, retest insulation, fire up.',
+            feedback:
+                'Acceptable, but at six years the other elements may not be far behind. Worth at least proposing inhibitor refresh and a filter check.',
+            pointsDelta: 1,
+          ),
+          JobOption(
+            text:
+                'Replace the failed element, retest insulation, flush and re-dose inhibitor, fit a magnetic filter if absent.',
+            feedback:
+                'This is the right professional answer. Element failure is usually a symptom of water quality. Without addressing the root cause the next element will fail soon.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Refuse the repair on a six-year-old boiler and quote a full replacement.',
+            feedback:
+                'Six years is not the end of life for a serviceable electric boiler. Be straight with the customer about lifespan and let them choose.',
+            pointsDelta: -1,
+          ),
+        ],
+      ),
+    ],
+    passOutcome:
+        'Element swapped under safe isolation, insulation retested at five hundred volts and confirmed sound, system flushed and re-dosed, magnetic filter fitted, boiler watched through a full hot cycle. Customer warm, agent informed, paperwork signed.',
+    failOutcome:
+        'Job ended with a defeated RCBO, shocked tenant, or shock-injured engineer. None of those are acceptable. Slow down, isolate, prove dead, find the cause.',
+  ),
+
+  JobScenario(
+    id: 'electric_boiler_survey',
+    title: 'Oil-to-electric conversion survey, rural cottage',
+    category: 'Electric boiler',
+    customerBrief:
+        'Customer is selling her late mother\'s rural cottage and wants the oil-fired boiler removed and replaced with an electric system before the EPC inspection in three weeks. She has heard electric is greener and easier than oil. You are there for a survey, no work today.',
+    onArrival:
+        'A 1960s detached cottage with a kitchen-mounted oil boiler discharging into a flue out the gable. Heat load looks moderate — three bedrooms, single glazing, partly-filled cavity walls, oil tank in the garden. The cut-out at the meter is sixty amps.',
+    safetyNote:
+        'This is a survey only. No live work today. Your job is to gather facts and write an honest quote.',
+    timeLimitSeconds: 0,
+    steps: [
+      JobStep(
+        prompt:
+            'The customer asks you to quote a twelve kilowatt electric flow boiler. What is your first concern?',
+        sceneNote:
+            'The kitchen consumer unit is a 1990s wired-fuse unit fed from the sixty amp main cut-out.',
+        options: [
+          JobOption(
+            text: 'Quote the boiler — sixty amps is plenty.',
+            feedback:
+                'A twelve kilowatt boiler needs over fifty-two amps just for itself. With the cooker, shower and immersion in the same property the supply will not cope.',
+            pointsDelta: -3,
+          ),
+          JobOption(
+            text:
+                'Explain the supply limit and recommend the customer apply to the DNO for a hundred amp supply upgrade before proceeding.',
+            feedback:
+                'Correct. The DNO upgrade is non-trivial — weeks of lead time and usually a separate cost. The customer needs that decision in writing before the boiler is ordered.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Downsize to a four kilowatt boiler so it fits the existing supply.',
+            feedback:
+                'A four kilowatt boiler will not heat a three-bed cottage with single glazing. Honest sizing comes from heat loss, not from the supply you happen to have.',
+            pointsDelta: -2,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'You explain SAP and running cost implications. The customer says she will pay any installation cost as long as the EPC is acceptable. What do you do?',
+        sceneNote:
+            'Three weeks to EPC. Oil is the current heat source. Customer is selling, not staying.',
+        options: [
+          JobOption(
+            text:
+                'Promise her a better EPC after the swap to electric.',
+            feedback:
+                'Electric heating typically gives a worse SAP rating than oil because of the carbon factor of grid electricity. This promise will rebound badly.',
+            pointsDelta: -3,
+          ),
+          JobOption(
+            text:
+                'Explain that grid electricity has a higher SAP carbon factor than oil, so an oil-to-electric swap is likely to worsen the EPC, not improve it. Get her informed decision in writing.',
+            feedback:
+                'Exactly right. Many customers misunderstand this. Documenting the conversation protects you and gives her time to reconsider before committing.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Suggest she keep the oil boiler but swap the burner.',
+            feedback:
+                'Not what she asked. The brief is a replacement, not a service.',
+            pointsDelta: 0,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'Customer agrees to keep the oil boiler. She asks for a quote on a full oil service and tank inspection instead. How do you handle scope?',
+        sceneNote:
+            'You are OFTEC registered. She has not had the boiler serviced for two years.',
+        options: [
+          JobOption(
+            text:
+                'Refuse and walk away — you came to fit electric, not service oil.',
+            feedback:
+                'Disrespectful and short-sighted. Within your scope, accept the change of brief and quote the right work.',
+            pointsDelta: -1,
+          ),
+          JobOption(
+            text:
+                'Quote the OFTEC service, tank inspection, and any insurance-related paperwork the EPC inspector may want.',
+            feedback:
+                'Good. The customer\'s real goal is a sellable property. Help her get there with the right work.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Do the service now, off the books.',
+            feedback:
+                'Never. OFTEC servicing is documented work, not a cash favour.',
+            pointsDelta: -3,
+            isDangerous: true,
+          ),
+        ],
+      ),
+    ],
+    passOutcome:
+        'Honest survey. Customer informed about SAP implications, supply limits, and the realistic cost of an electric conversion. She elects to keep the oil boiler with a proper service. You write a clear quote and leave with a job and a customer who trusts you.',
+    failOutcome:
+        'Customer pays for an electric install that worsens her EPC, fails the inspection, and damages her property sale. Bad outcome and a bad reputation.',
+  ),
+
+  JobScenario(
+    id: 'electric_boiler_service',
+    title: 'Annual service, EHC SlimJim, second-floor flat',
+    category: 'Electric boiler',
+    customerBrief:
+        'Annual service booked by a residents\' management agent. Eight identical flats in the block, each with an EHC SlimJim electric boiler installed five years ago. You are doing one as a pilot before the full block of eight.',
+    onArrival:
+        'Flat is tidy. The boiler is in a hallway cupboard with a magnetic filter and a small unvented cylinder beside it. System pressure shows zero on the boiler display. There is no obvious leak. Customer reports heating fine until last week.',
+    safetyNote:
+        'Live electrical kit. Safe isolation rules apply throughout. Treat unvented cylinder G3 requirements with full respect.',
+    timeLimitSeconds: 0,
+    steps: [
+      JobStep(
+        prompt:
+            'Display shows zero bar. Customer says heating was working last week. What do you do first?',
+        sceneNote:
+            'No water on the floor. No obvious damp on the ceiling below from the flat above.',
+        options: [
+          JobOption(
+            text:
+                'Open the filling loop and refill the system to one bar straight away.',
+            feedback:
+                'You have not found out why the pressure dropped. Refilling without investigating risks repeat callouts and a hidden small leak that will damage the flat below.',
+            pointsDelta: -1,
+          ),
+          JobOption(
+            text:
+                'Inspect every visible joint, every TRV, the PRV outlet and the expansion vessel before refilling.',
+            feedback:
+                'Right approach. A pressure drop without a visible leak often means PRV release from a failed expansion vessel, or a weep at a TRV stem. Find it first.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Tell the customer the boiler is at end of life and quote a replacement.',
+            feedback:
+                'A pressure drop is not end of life on a five-year-old boiler. Diagnose before you sell.',
+            pointsDelta: -3,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'You check the expansion vessel. The Schrader valve gives no pressure at all and a drop of water comes out when you press it. What does this mean?',
+        sceneNote:
+            'Air side of the vessel is dry on every other charge you have ever pressed.',
+        options: [
+          JobOption(
+            text:
+                'Just re-pressurise the vessel through the Schrader.',
+            feedback:
+                'Water out of the Schrader means the rubber bladder has ruptured. You cannot fix it by pumping air in.',
+            pointsDelta: -3,
+          ),
+          JobOption(
+            text:
+                'The diaphragm has failed. Replace the expansion vessel before refilling and firing up.',
+            feedback:
+                'Correct. The PRV has been dumping system water every time the boiler heated up — and the unattended discharge has slowly drained the system to zero.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Tighten the Schrader valve harder.',
+            feedback:
+                'You cannot reseat a torn bladder by tightening the Schrader.',
+            pointsDelta: -2,
+          ),
+        ],
+      ),
+      JobStep(
+        prompt:
+            'You replace the vessel, re-pressurise the system, and now want to complete the service properly. Pick the right service steps.',
+        sceneNote:
+            'You have time and the customer is patient.',
+        options: [
+          JobOption(
+            text:
+                'Just refit the cover and leave — heating works.',
+            feedback:
+                'You have not completed the service you were paid for.',
+            pointsDelta: -2,
+          ),
+          JobOption(
+            text:
+                'Test the PRV by lifting the lever, check inhibitor concentration, clean the magnetic filter, listen for clean contactor operation, watch a full firing cycle, and update the benchmark log.',
+            feedback:
+                'Full professional service. Each step protects the customer and adds a useful data point for next year.',
+            pointsDelta: 3,
+            isCorrect: true,
+          ),
+          JobOption(
+            text:
+                'Drain the system and refill with fresh water with no inhibitor — easier than testing.',
+            feedback:
+                'Skipping inhibitor on an electric system is a fast route to a failed element. Never leave a system uninhibited.',
+            pointsDelta: -3,
+          ),
+        ],
+      ),
+    ],
+    passOutcome:
+        'Vessel replaced, system re-pressurised and re-dosed, full service completed and logged. You write a clear note to the agent recommending vessel inspection in the other seven flats — likely the same problem brewing. Agent grateful, you have just turned one job into eight.',
+    failOutcome:
+        'Quick refill, no diagnosis. Within a month the same flat has dropped pressure again and the ceiling of the flat below is stained. Agent unhappy, reputation damaged, eight jobs lost.',
+  ),
 ];

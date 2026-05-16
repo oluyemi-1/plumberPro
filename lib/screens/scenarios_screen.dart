@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../data/scenarios_data.dart';
+import '../services/pro_entitlement.dart';
 import '../theme.dart';
+import '../widgets/pro_lock_overlay.dart';
 import 'scenario_session_screen.dart';
 
 class ScenariosScreen extends StatefulWidget {
@@ -30,9 +32,13 @@ class _ScenariosScreenState extends State<ScenariosScreen> {
   @override
   Widget build(BuildContext context) {
     final scenarios = _filtered;
+    final freeScenarios =
+        jobScenarios.take(ProEntitlement.freeLimit).toSet();
     return Scaffold(
       appBar: AppBar(title: const Text('Job scenarios')),
-      body: Column(
+      body: AnimatedBuilder(
+        animation: ProEntitlement.instance,
+        builder: (context, _) => Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
@@ -91,12 +97,17 @@ class _ScenariosScreenState extends State<ScenariosScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (_, i) {
                 final s = scenarios[i];
-                return _ScenarioCard(
-                  scenario: s,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ScenarioSessionScreen(scenario: s),
+                final locked = !ProEntitlement.instance.isPro &&
+                    !freeScenarios.contains(s);
+                return ProLockOverlay(
+                  locked: locked,
+                  child: _ScenarioCard(
+                    scenario: s,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ScenarioSessionScreen(scenario: s),
+                      ),
                     ),
                   ),
                 );
@@ -104,6 +115,7 @@ class _ScenariosScreenState extends State<ScenariosScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

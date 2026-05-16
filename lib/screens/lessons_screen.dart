@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../data/lessons_data.dart';
 import '../data/backflow_lessons_data.dart';
+import '../data/electric_boiler_lessons_data.dart';
 import '../data/electrical_lessons_data.dart';
 import '../data/fuels_lessons_data.dart';
 import '../data/renewables_lessons_data.dart';
@@ -10,9 +11,11 @@ import '../data/backflow_quiz_data.dart';
 import '../data/electrical_quiz_data.dart';
 import '../data/fuels_quiz_data.dart';
 import '../data/renewables_quiz_data.dart';
+import '../services/pro_entitlement.dart';
 import '../services/progress_service.dart';
 import '../services/tts_service.dart';
 import '../theme.dart';
+import '../widgets/pro_lock_overlay.dart';
 import 'quiz_session_screen.dart';
 
 /// All lesson topics across the core and extension data files.
@@ -22,6 +25,7 @@ List<LessonTopic> get _allLessonTopics => [
       ...renewablesLessonTopics,
       ...fuelsLessonTopics,
       ...backflowLessonTopics,
+      ...electricBoilerLessonTopics,
     ];
 
 /// All quiz topics across the core and extension data files.
@@ -111,8 +115,21 @@ class _LessonsScreenState extends State<LessonsScreen> {
         ),
         Expanded(
           child: AnimatedBuilder(
-            animation: ProgressService.instance,
-            builder: (context, _) => ListView.separated(
+            animation: Listenable.merge(
+                [ProgressService.instance, ProEntitlement.instance]),
+            builder: (context, _) {
+              // First N lessons per category are free; rest require Pro.
+              final freeLessonIds = <String>{};
+              final byCategory = <String, List<LessonTopic>>{};
+              for (final lt in _allLessonTopics) {
+                byCategory.putIfAbsent(lt.category, () => []).add(lt);
+              }
+              for (final group in byCategory.values) {
+                for (final lt in group.take(ProEntitlement.freeLimit)) {
+                  freeLessonIds.add(lt.id);
+                }
+              }
+              return ListView.separated(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
             itemCount: topics.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -120,7 +137,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
               final t = topics[i];
               final visited =
                   ProgressService.instance.hasVisited('lesson:${t.id}');
-          return Card(
+              final locked = !ProEntitlement.instance.isPro &&
+                  !freeLessonIds.contains(t.id);
+          return ProLockOverlay(
+            locked: locked,
+            child: Card(
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: () {
@@ -186,9 +207,11 @@ class _LessonsScreenState extends State<LessonsScreen> {
                 ),
               ),
             ),
+            ),
           );
             },
-          ),
+          );
+            },
           ),
         ),
       ]),

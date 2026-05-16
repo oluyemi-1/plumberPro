@@ -8,6 +8,8 @@ class ToolEntry {
   final String commonErrors;
   final String safety;
   final IconData icon;
+  // Optional photo asset path. When null the category icon is shown instead.
+  final String? imagePath;
 
   const ToolEntry({
     required this.name,
@@ -17,6 +19,7 @@ class ToolEntry {
     required this.commonErrors,
     required this.safety,
     required this.icon,
+    this.imagePath,
   });
 
   String get speakable =>
@@ -36,6 +39,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Keep fingers clear of the cutting wheel and de-burr the inside of the cut afterwards.',
     icon: Icons.content_cut_rounded,
+    imagePath: 'assets/tools/pipe_slice_15mm.png',
   ),
   ToolEntry(
     name: 'Pipe slice (22 mm)',
@@ -49,6 +53,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always ream the inside edge after cutting to prevent flow restriction and scoring of seals.',
     icon: Icons.content_cut_rounded,
+    imagePath: 'assets/tools/pipe_slice_22mm.png',
   ),
   ToolEntry(
     name: 'Hacksaw and junior hacksaw',
@@ -62,6 +67,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Mind your knuckles on the blade and keep the work clamped — never cut a pipe held in your hand.',
     icon: Icons.handyman_rounded,
+    imagePath: 'assets/tools/hacksaw.png',
   ),
   ToolEntry(
     name: 'Reamer',
@@ -74,6 +80,7 @@ const toolEntries = <ToolEntry>[
         'Skipping the reaming step leaves a sharp lip that cuts compression olives and push-fit O-rings.',
     safety: 'The fresh cut edge is sharp — wear gloves while reaming.',
     icon: Icons.circle_outlined,
+    imagePath: 'assets/tools/reamer.png',
   ),
   ToolEntry(
     name: 'Pipe wrench (Stillson)',
@@ -87,6 +94,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Stand braced — the wrench can suddenly slip when a joint cracks free.',
     icon: Icons.build_rounded,
+    imagePath: 'assets/tools/pipe_wrench.png',
   ),
   ToolEntry(
     name: 'Adjustable spanner',
@@ -100,6 +108,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Do not extend the handle with a pipe — choose a bigger spanner instead.',
     icon: Icons.settings_rounded,
+    imagePath: 'assets/tools/adjustable_spanner.png',
   ),
   ToolEntry(
     name: 'Basin wrench (cranked spanner)',
@@ -113,6 +122,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Brace your other hand against the cabinet — these spanners can bite back if they slip.',
     icon: Icons.engineering_rounded,
+    imagePath: 'assets/tools/basin_wrench.png',
   ),
   ToolEntry(
     name: 'Compression spanner set',
@@ -126,6 +136,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always hold the body — turning the nut alone twists the pipe and stresses other joints.',
     icon: Icons.build_circle_rounded,
+    imagePath: 'assets/tools/compression_spanner.png',
   ),
   ToolEntry(
     name: 'Blow torch / gas torch',
@@ -139,6 +150,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Use a heat mat behind the work, keep an extinguisher to hand, and observe a hot-works watch period after.',
     icon: Icons.local_fire_department_rounded,
+    imagePath: 'assets/tools/blow_torch.png',
   ),
   ToolEntry(
     name: 'Solder and flux brush',
@@ -152,6 +164,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Flux is mildly corrosive — wash hands afterwards and wipe excess off finished joints with a damp cloth.',
     icon: Icons.brush_rounded,
+    imagePath: 'assets/tools/solder_and_flux_brush.png',
   ),
   ToolEntry(
     name: 'Heat-resistant mat',
@@ -165,6 +178,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always do a hot-works check fifteen minutes after finishing — embers can smoulder undetected.',
     icon: Icons.shield_rounded,
+    imagePath: 'assets/tools/heat_resistant_mat.png',
   ),
   ToolEntry(
     name: 'Pipe bender (hand spring)',
@@ -178,6 +192,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Watch for the pipe ends whipping back as it springs — keep your face clear.',
     icon: Icons.sync_alt_rounded,
+    imagePath: 'assets/tools/pipe_bender_hand_spring.png',
   ),
   ToolEntry(
     name: 'Pipe bender (lever / machine)',
@@ -191,6 +206,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Keep feet clear of the long lever and never stand in line of the swing.',
     icon: Icons.architecture_rounded,
+    imagePath: 'assets/tools/pipe_bender_machine.png',
   ),
   ToolEntry(
     name: 'Push-fit insert tool',
@@ -204,6 +220,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always test the joint by pulling firmly — push-fits that are not fully home can blow out under pressure.',
     icon: Icons.input_rounded,
+    imagePath: 'assets/tools/push_fit_insert_tool.png',
   ),
   ToolEntry(
     name: 'Disconnecting tongs',
@@ -217,6 +234,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always confirm the line is dead — releasing a pressurised push-fit can soak the area or scald.',
     icon: Icons.unfold_less_rounded,
+    imagePath: 'assets/tools/disconnecting_tongs.png',
   ),
   ToolEntry(
     name: 'Crimping tool (press-fit)',
@@ -230,6 +248,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Keep fingers clear of the closing jaws — they exert several tonnes of force.',
     icon: Icons.compress_rounded,
+    imagePath: 'assets/tools/crimping_tool.png',
   ),
   ToolEntry(
     name: 'Pressure test pump',
@@ -243,6 +262,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Stand back from any test cap during pressurisation and depressurise slowly afterwards.',
     icon: Icons.speed_rounded,
+    imagePath: 'assets/tools/pressure_test_pump.png',
   ),
   ToolEntry(
     name: 'Manometer',
@@ -256,6 +276,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Only Gas Safe registered engineers may take live readings; always leak-test the connection before opening the test point.',
     icon: Icons.show_chart_rounded,
+    imagePath: 'assets/tools/manometer.png',
   ),
   ToolEntry(
     name: 'Combustion analyser (FGA)',
@@ -269,6 +290,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'A high CO reading or ratio above 0.004 means turn the appliance off and investigate — never sign it off.',
     icon: Icons.air_rounded,
+    imagePath: 'assets/tools/combustion_analyser.png',
   ),
   ToolEntry(
     name: 'Multi-meter',
@@ -282,6 +304,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always prove the meter dead-live-dead on a known supply before relying on a zero reading.',
     icon: Icons.electric_bolt_rounded,
+    imagePath: 'assets/tools/multi_meter.png',
   ),
   ToolEntry(
     name: 'Gas leak detector',
@@ -295,6 +318,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'On any positive find, isolate the supply at the meter and do not relight until the leak is sealed and re-tested.',
     icon: Icons.gas_meter_rounded,
+    imagePath: 'assets/tools/gas_leak_detector.png',
   ),
   ToolEntry(
     name: 'Drain rods (set with attachments)',
@@ -308,6 +332,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Wear gauntlets and eye protection — drains contain pathogens. Wash thoroughly after use.',
     icon: Icons.linear_scale_rounded,
+    imagePath: 'assets/tools/drain_rods.png',
   ),
   ToolEntry(
     name: 'Plunger (sink and WC types)',
@@ -321,6 +346,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'After clearing, run a generous rinse of clean water and disinfect the plunger — splashes are inevitable.',
     icon: Icons.shower_rounded,
+    imagePath: 'assets/tools/plunger.png',
   ),
   ToolEntry(
     name: 'Drain auger / snake',
@@ -334,6 +360,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Wear gloves and goggles — when the blockage gives way, dirty water can splash out of the trap.',
     icon: Icons.cable_rounded,
+    imagePath: 'assets/tools/drain_auger.png',
   ),
   ToolEntry(
     name: 'Wet-vac for power flushing',
@@ -347,6 +374,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'The waste water is hot and stains badly — protect carpets and never empty into a foul drain that cannot cope.',
     icon: Icons.cleaning_services_rounded,
+    imagePath: 'assets/tools/wet_vac.png',
   ),
   ToolEntry(
     name: 'Inspection camera',
@@ -360,6 +388,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Wash and disinfect the head after every drain use — never lay it down on customer surfaces.',
     icon: Icons.videocam_rounded,
+    imagePath: 'assets/tools/inspection_camera.png',
   ),
   ToolEntry(
     name: 'Water meter / flow cup',
@@ -373,6 +402,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Take care with hot water — use the cup at a moderate temperature setting where possible.',
     icon: Icons.water_drop_rounded,
+    imagePath: 'assets/tools/flow_cup.png',
   ),
   ToolEntry(
     name: 'Pipe locator',
@@ -386,6 +416,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always assume any unknown service may be live electric — confirm with a CAT scanner before digging.',
     icon: Icons.travel_explore_rounded,
+    imagePath: 'assets/tools/pipe_locator.png',
   ),
   ToolEntry(
     name: 'Acoustic leak detector',
@@ -399,6 +430,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Beware of trip hazards while wearing headphones — keep one ear free near roads.',
     icon: Icons.hearing_rounded,
+    imagePath: 'assets/tools/acoustic_leak_detector.png',
   ),
   ToolEntry(
     name: 'Thermal camera',
@@ -412,6 +444,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Do not rely on thermal alone for live electrical diagnosis — confirm with proper electrical testing.',
     icon: Icons.thermostat_rounded,
+    imagePath: 'assets/tools/thermal_camera.png',
   ),
   ToolEntry(
     name: 'Magnetic filter',
@@ -425,6 +458,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'The water is hot and stains carpets badly — use a tray and lay down dust sheets before opening.',
     icon: Icons.filter_alt_rounded,
+    imagePath: 'assets/tools/magnetic_filter.png',
   ),
   ToolEntry(
     name: 'PTFE tape',
@@ -438,6 +472,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Use the correct tape — gas thread tape is yellow and thicker; do not substitute white water-grade on gas joints.',
     icon: Icons.layers_rounded,
+    imagePath: 'assets/tools/ptfe_tape.png',
   ),
   ToolEntry(
     name: 'Hemp and paste',
@@ -451,6 +486,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Wash off paste smears before they cure — some types are mildly irritating to skin.',
     icon: Icons.grass_rounded,
+    imagePath: 'assets/tools/hemp_and_paste.png',
   ),
   ToolEntry(
     name: 'Spirit level',
@@ -464,6 +500,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'No specific hazard, but a dropped level can spike a foot — keep it on a strap or in a pouch on ladders.',
     icon: Icons.straighten_rounded,
+    imagePath: 'assets/tools/spirit_level.png',
   ),
   ToolEntry(
     name: 'Plumb bob',
@@ -477,6 +514,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Take care above head height — a dropped plumb bob hits hard.',
     icon: Icons.vertical_align_center_rounded,
+    imagePath: 'assets/tools/plumb_bob.png',
   ),
   ToolEntry(
     name: 'Tape measure',
@@ -490,6 +528,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'The blade has a sharp edge — guide it back with your thumb rather than letting it whip into the case.',
     icon: Icons.straighten_outlined,
+    imagePath: 'assets/tools/tape_measure.png',
   ),
   ToolEntry(
     name: 'Stanley knife / utility knife',
@@ -503,6 +542,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Change the blade often — sharp blades cut where you point them; blunt blades cut where you do not.',
     icon: Icons.crop_rounded,
+    imagePath: 'assets/tools/utility_knife.png',
   ),
   ToolEntry(
     name: 'Hole saw set',
@@ -516,6 +556,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Always check both sides for cables and pipes before drilling, and clamp the work where possible.',
     icon: Icons.donut_large_rounded,
+    imagePath: 'assets/tools/hole_saw_set.png',
   ),
   ToolEntry(
     name: 'SDS drill',
@@ -529,6 +570,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Use a CAT scanner first, wear safety glasses and ear protection, and keep loose clothing clear of the chuck.',
     icon: Icons.power_rounded,
+    imagePath: 'assets/tools/sds_drill.png',
   ),
   ToolEntry(
     name: 'Screw extractors',
@@ -542,6 +584,7 @@ const toolEntries = <ToolEntry>[
     safety:
         'Wear safety glasses — extractors are very hard and shatter rather than bend if they break.',
     icon: Icons.rotate_left_rounded,
+    imagePath: 'assets/tools/screw_extractor.png',
   ),
   ToolEntry(
     name: 'Adjustable hop-up / step ladder',
@@ -555,5 +598,6 @@ const toolEntries = <ToolEntry>[
     safety:
         'Never stand on the top step of a step ladder. Inspect the stiles and feet before each use.',
     icon: Icons.stairs_rounded,
+    imagePath: 'assets/tools/step_ladder.png',
   ),
 ];

@@ -159,15 +159,7 @@ class _ToolsEncyclopediaScreenState extends State<ToolsEncyclopediaScreen> {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: color.withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(t.icon, color: color, size: 26),
-                                ),
+                                _ToolThumb(tool: t, color: color, size: 56),
                                 const SizedBox(width: 14),
                                 Expanded(
                                   child: Column(
@@ -271,18 +263,40 @@ class _ToolDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (tool.imagePath != null)
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: 240,
+                    height: 240,
+                    color: color.withValues(alpha: 0.06),
+                    child: Image.asset(
+                      tool.imagePath!,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                      errorBuilder: (_, __, ___) => Center(
+                        child: Icon(tool.icon, color: color, size: 56),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (tool.imagePath != null) const SizedBox(height: 16),
             Row(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
+                if (tool.imagePath == null) ...[
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(tool.icon, color: color, size: 30),
                   ),
-                  child: Icon(tool.icon, color: color, size: 30),
-                ),
-                const SizedBox(width: 14),
+                  const SizedBox(width: 14),
+                ],
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -358,6 +372,50 @@ class _ToolDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolThumb extends StatelessWidget {
+  final ToolEntry tool;
+  final Color color;
+  final double size;
+
+  const _ToolThumb({
+    required this.tool,
+    required this.color,
+    this.size = 56,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = color.withValues(alpha: 0.15);
+    final iconSize = size * 0.55;
+    if (tool.imagePath == null) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(color: tint, shape: BoxShape.circle),
+        child: Icon(tool.icon, color: color, size: iconSize),
+      );
+    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: size,
+        height: size,
+        color: tint,
+        child: Image.asset(
+          tool.imagePath!,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (_, __, ___) => Icon(
+            tool.icon,
+            color: color,
+            size: iconSize,
+          ),
         ),
       ),
     );

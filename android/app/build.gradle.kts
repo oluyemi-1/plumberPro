@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -11,14 +12,18 @@ plugins {
 // Release-signing credentials. `key.properties` lives at android/key.properties
 // and is gitignored. To enable real release signing, copy
 // android/key.properties.template → android/key.properties and fill it in.
-// If the file is absent we fall back to the debug key, which is fine for
-// `flutter run --release` on your own devices but cannot be uploaded to
-// the Play Store.
+// If the file is absent — OR its `storeFile` path does not resolve on the
+// current machine (e.g. a Windows path on macOS) — we fall back to the debug
+// key, which is fine for `flutter run` and `--release` on your own devices
+// but cannot be uploaded to the Play Store.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
-val hasReleaseKeystore = keystorePropertiesFile.exists()
-if (hasReleaseKeystore) {
+val hasReleaseKeystore = if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    val storeFilePath = keystoreProperties["storeFile"] as? String
+    storeFilePath != null && File(storeFilePath).exists()
+} else {
+    false
 }
 
 android {

@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
+import '../services/iap_service.dart';
 import '../services/redemption_service.dart';
 import '../theme.dart';
 
 /// PipeSmart Pro upsell screen shown when a user taps a locked feature.
 ///
-/// The "Unlock Pro" button is a stub until real in-app purchases land —
-/// for now it shows a "Coming soon" message. Pro entitlement can be
-/// flipped manually for testing via the dev toggle in Settings.
+/// Two channels: native auto-renewing subscriptions (handled by
+/// [IapService] via the App Store / Play Store), and the redemption-code
+/// box for institutional / direct-sale licences ([RedemptionService]).
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
 
   static const _teamEmail = 'info@karitec.co.uk';
 
   static Future<void> show(BuildContext context) {
+    // Make sure products are loaded when the paywall opens.
+    IapService.instance.refreshProducts();
     return Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const PaywallScreen(),
@@ -40,11 +44,176 @@ class PaywallScreen extends StatelessWidget {
           const SizedBox(height: 18),
           _FeatureList(),
           const SizedBox(height: 20),
+          const _PlansSection(),
+          const SizedBox(height: 14),
           _RedeemCodeCard(),
           const SizedBox(height: 14),
           _TeamLicenceCard(email: _teamEmail),
           const SizedBox(height: 18),
           _LegalFooter(),
+        ],
+      ),
+    );
+  }
+}
+
+/// Native subscription plans, driven by [IapService]. Shows store-localized
+/// prices and the auto-renew disclosure Apple requires near the buy button.
+class _PlansSection extends StatelessWidget {
+  const _PlansSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: IapService.instance,
+      builder: (context, _) {
+        final iap = IapService.instance;
+
+        if (!iap.available) {
+          // Store unreachable (e.g. simulator, or not signed in). Hide the
+          // plans entirely rather than show a broken buy button — the code
+          // box below still works.
+          return const SizedBox.shrink();
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Choose a plan',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 4),
+                Text(
+                  'Subscriptions are billed through your App Store / Google Play account.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                if (iap.loading && iap.products.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (iap.products.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      iap.lastError ??
+                          'Plans are not available right now. Please try again later.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  )
+                else
+                  for (final product in iap.products)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: _PlanRow(product: product),
+                    ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  icon: const Icon(Icons.restore_rounded, size: 18),
+                  label: const Text('Restore purchases'),
+                  onPressed: () async {
+                    await iap.restore();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              'Checking your account for active subscriptions…'),
+                          duration: Duration(seconds: 3),
+                        ),
+                      );
+                    }
+                  },
+                ),
+                const Divider(height: 20),
+                Text(
+                  'Subscriptions renew automatically unless cancelled at least '
+                  '24 hours before the end of the current period. Your account '
+                  'is charged for renewal within 24 hours before the period '
+                  'ends. Manage or cancel anytime in your App Store / Google '
+                  'Play account settings.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.muted,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PlanRow extends StatelessWidget {
+  final ProductDetails product;
+  const _PlanRow({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final plan = IapService.instance.planForProduct(product.id);
+    final label = plan?.label ?? product.title;
+    final isYear = plan?.months == 12;
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        side: BorderSide(
+          color: AppColors.primary.withValues(alpha: isYear ? 0.8 : 0.3),
+          width: isYear ? 2 : 1,
+        ),
+      ),
+      onPressed: () => IapService.instance.buy(product),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                    if (isYear) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'BEST VALUE',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Text(
+            product.price,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -87,7 +256,7 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           const Text(
-            "PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. It is currently available via institutional licence or activation code — individual subscriptions are coming in a future update.",
+            "PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below, or redeem an activation code from your college, employer or training provider.",
             style: TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
           ),
         ],

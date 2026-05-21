@@ -96,11 +96,15 @@ class _PlansSection extends StatelessWidget {
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (iap.products.isEmpty)
+                  // Never surface a raw StoreKit / Billing error to users —
+                  // show a calm, neutral message. (On the iOS Simulator the
+                  // store is unreachable, so this is what shows there.)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      iap.lastError ??
-                          'Plans are not available right now. Please try again later.',
+                      'Subscription plans load when you\'re signed in to the '
+                      'App Store / Google Play. You can also redeem an '
+                      'activation code below.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )

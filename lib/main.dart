@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'screens/splash_screen.dart';
 import 'services/diagnostics_service.dart';
 import 'services/expense_service.dart';
+import 'services/iap_service.dart';
 import 'services/inventory_service.dart';
 import 'services/job_template_service.dart';
 import 'services/notifications_service.dart';
@@ -32,6 +35,13 @@ Future<void> main() async {
   await QuoteService.instance.ensureLoaded();
   await InventoryService.instance.ensureLoaded();
   await ProEntitlement.instance.ensureLoaded();
+  // Connect to the store and re-sync any active subscription in the
+  // background — must not block first paint, and tolerates being offline.
+  unawaited(IapService.instance.init().then((_) {
+    if (IapService.instance.available) {
+      IapService.instance.restore();
+    }
+  }));
   // Count today's app-open for streak tracking.
   await ProgressService.instance.recordOpenToday();
   runApp(const PipeSmartApp());

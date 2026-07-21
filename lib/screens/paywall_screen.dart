@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
@@ -5,12 +7,18 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import '../services/iap_service.dart';
 import '../services/redemption_service.dart';
 import '../theme.dart';
+import 'legal_screen.dart';
 
 /// PipeSmart Pro upsell screen shown when a user taps a locked feature.
 ///
-/// Two channels: native auto-renewing subscriptions (handled by
-/// [IapService] via the App Store / Play Store), and the redemption-code
-/// box for institutional / direct-sale licences ([RedemptionService]).
+/// Native auto-renewing subscriptions ([IapService], via the App Store /
+/// Play Store) are the primary channel on every platform.
+///
+/// On Android we additionally offer the redemption-code box and a bulk-licence
+/// contact card for institutional / direct-sale licences. Both are hidden on
+/// iOS: App Store Review Guideline 3.1.1 forbids unlocking paid digital content
+/// through any mechanism other than In-App Purchase, and even a "contact us for
+/// a plan" card counts as out-of-store purchase steering.
 class PaywallScreen extends StatelessWidget {
   const PaywallScreen({super.key});
 
@@ -29,6 +37,9 @@ class PaywallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Non-IAP channels (code redemption, bulk-licence contact) are Android-only;
+    // see the class doc for the App Store 3.1.1 rationale.
+    final showNonIapChannels = !Platform.isIOS;
     return Scaffold(
       appBar: AppBar(
         title: const Text('PipeSmart Pro'),
@@ -40,15 +51,17 @@ class PaywallScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          _Header(),
+          _Header(showRedeemHint: showNonIapChannels),
           const SizedBox(height: 18),
           _FeatureList(),
           const SizedBox(height: 20),
-          const _PlansSection(),
-          const SizedBox(height: 14),
-          _RedeemCodeCard(),
-          const SizedBox(height: 14),
-          _TeamLicenceCard(email: _teamEmail),
+          _PlansSection(showRedeemHint: showNonIapChannels),
+          if (showNonIapChannels) ...[
+            const SizedBox(height: 14),
+            _RedeemCodeCard(),
+            const SizedBox(height: 14),
+            _TeamLicenceCard(email: _teamEmail),
+          ],
           const SizedBox(height: 18),
           _LegalFooter(),
         ],
@@ -60,7 +73,10 @@ class PaywallScreen extends StatelessWidget {
 /// Native subscription plans, driven by [IapService]. Shows store-localized
 /// prices and the auto-renew disclosure Apple requires near the buy button.
 class _PlansSection extends StatelessWidget {
-  const _PlansSection();
+  /// Whether to mention the activation-code fallback in the empty state.
+  /// Android only — see [PaywallScreen] doc.
+  final bool showRedeemHint;
+  const _PlansSection({required this.showRedeemHint});
 
   @override
   Widget build(BuildContext context) {
@@ -71,8 +87,8 @@ class _PlansSection extends StatelessWidget {
 
         if (!iap.available) {
           // Store unreachable (e.g. simulator, or not signed in). Hide the
-          // plans entirely rather than show a broken buy button — the code
-          // box below still works.
+          // plans entirely rather than show a broken buy button. On Android the
+          // redemption-code box below still provides a way in.
           return const SizedBox.shrink();
         }
 
@@ -102,9 +118,12 @@ class _PlansSection extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Text(
-                      'Subscription plans load when you\'re signed in to the '
-                      'App Store / Google Play. You can also redeem an '
-                      'activation code below.',
+                      showRedeemHint
+                          ? 'Subscription plans load when you\'re signed in to '
+                              'the App Store / Google Play. You can also redeem '
+                              'an activation code below.'
+                          : 'Subscription plans load when you\'re signed in to '
+                              'the App Store.',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   )
@@ -225,6 +244,10 @@ class _PlanRow extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
+  /// Android only: mention the activation-code option in the intro copy.
+  final bool showRedeemHint;
+  const _Header({required this.showRedeemHint});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -259,9 +282,11 @@ class _Header extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const Text(
-            "PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below, or redeem an activation code from your college, employer or training provider.",
-            style: TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
+          Text(
+            showRedeemHint
+                ? 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below, or redeem an activation code from your college, employer or training provider.'
+                : 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below to get full access.',
+            style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
           ),
         ],
       ),
@@ -502,20 +527,43 @@ class _TeamLicenceCard extends StatelessWidget {
   }
 }
 
+/// Functional links to the Terms of Use (EULA) and Privacy Policy, required on
+/// the paywall by App Store Review Guideline 3.1.2(c) for auto-renewing
+/// subscriptions. Both open the in-app [LegalScreen], which holds the full text.
 class _LegalFooter extends StatelessWidget {
+  void _openLegal(BuildContext context, int tab) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => LegalScreen(initialTab: tab)),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Text(
-        'Terms of Use and Privacy Policy are available on the support website (karitec.co.uk).',
-        style: TextStyle(
-          fontSize: 11,
-          color: AppColors.muted,
-          height: 1.4,
+    final linkStyle = TextStyle(
+      fontSize: 12,
+      color: AppColors.primary,
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+    );
+    return Column(
+      children: [
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          children: [
+            GestureDetector(
+              onTap: () => _openLegal(context, 1),
+              child: Text('Terms of Use (EULA)', style: linkStyle),
+            ),
+            Text('·', style: TextStyle(color: AppColors.muted, fontSize: 12)),
+            GestureDetector(
+              onTap: () => _openLegal(context, 0),
+              child: Text('Privacy Policy', style: linkStyle),
+            ),
+          ],
         ),
-        textAlign: TextAlign.center,
-      ),
+      ],
     );
   }
 }

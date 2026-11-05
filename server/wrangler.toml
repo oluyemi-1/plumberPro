@@ -2,16 +2,25 @@ name = "plumber-pro-proxy"
 main = "src/worker.ts"
 compatibility_date = "2026-05-01"
 
-# After running `wrangler kv:namespace create RATE_LIMIT_KV`, replace the
-# id below with the value Wrangler prints (without quotes).
+# After running `wrangler kv namespace create RATE_LIMIT_KV`, replace the
+# id below with the value Wrangler prints (without quotes). The namespace
+# holds per-IP rate-limit buckets, per-subscription monthly question
+# counters and the cached Google OAuth token.
 [[kv_namespaces]]
 binding = "RATE_LIMIT_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "f73d0159a7e544e4a3a7b27f164062e2"
 
-# Optional: tune the default 30 req/min per IP rate limit.
-# [vars]
+[vars]
+ANDROID_PACKAGE_NAME = "com.karitec.pipesmart"
+IOS_BUNDLE_ID = "com.karitec.pipesmart"
+# Questions per subscription per UTC month.
+MONTHLY_QUESTIONS = "300"
+# Optional tuning:
 # RATE_LIMIT_PER_MIN = "60"
+# ALLOWED_MODELS = "claude-haiku-5-5,claude-sonnet-5-5"
+# DISABLED = "1"   # kill switch: every call returns 503
 
-# Secrets are NOT defined here — set them via:
-#   wrangler secret put ANTHROPIC_API_KEY
-#   wrangler secret put APP_SHARED_KEY
+# Secrets are NOT defined here — set them via `wrangler secret put`:
+#   ANTHROPIC_API_KEY, APP_SHARED_KEY, ENTITLEMENT_SECRET,
+#   PLAY_SERVICE_ACCOUNT_JSON, APPLE_IAP_KEY_P8, APPLE_KEY_ID, APPLE_ISSUER_ID,
+#   REDEMPTION_SECRET (optional). See README.md.

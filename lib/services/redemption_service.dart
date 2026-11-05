@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pro_entitlement.dart';
+import 'purchase_proof.dart';
 
 /// Result of a redemption attempt.
 class RedemptionResult {
@@ -184,6 +185,13 @@ class RedemptionService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(_kRedeemed, redeemed.toList());
     await ProEntitlement.instance.grantPro(until: expiresAt);
+    // The proxy server re-validates the code's HMAC before metering the AI
+    // allowance, so keep it as this device's purchase proof.
+    await PurchaseProof.save(PurchaseProof(
+      platform: 'code',
+      token: formatted,
+      productId: months == null ? 'code-lifetime' : 'code-${months}m',
+    ));
     return RedemptionResult(resultOk, expiresAt: expiresAt, months: months);
   }
 }

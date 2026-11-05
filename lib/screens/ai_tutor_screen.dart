@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/ai_tutor_service.dart';
 import '../services/tts_service.dart';
 import '../theme.dart';
+import 'paywall_screen.dart';
 import 'settings_screen.dart';
 
 /// Chat-style screen powered by the Anthropic Messages API. Speaks the
@@ -81,6 +82,30 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
           AnimatedBuilder(
             animation: AiTutorService.instance,
             builder: (_, __) {
+              final svc = AiTutorService.instance;
+              final left = svc.questionsRemaining;
+              if (left == null) return const SizedBox.shrink();
+              final resets = svc.allowanceResetsAt?.toLocal();
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Center(
+                  child: Tooltip(
+                    message: resets == null
+                        ? '$left of ${svc.questionsLimit} AI questions left this month'
+                        : '$left of ${svc.questionsLimit} AI questions left. Resets ${resets.day}/${resets.month}.',
+                    child: Chip(
+                      label: Text('$left left'),
+                      labelStyle: const TextStyle(fontSize: 11),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          AnimatedBuilder(
+            animation: AiTutorService.instance,
+            builder: (_, __) {
               final cacheHits = AiTutorService.instance.cacheHits;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -118,6 +143,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
             return Column(
               children: [
                 if (!svc.hasKey) _NoKeyBanner(),
+                if (svc.needsPro) _ProRequiredBanner(),
                 Expanded(
                   child: svc.messages.isEmpty
                       ? _StarterScreen(
@@ -162,7 +188,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                   controller: _input,
                   focusNode: _focus,
                   busy: svc.busy,
-                  enabled: svc.hasKey,
+                  enabled: svc.hasKey && !svc.needsPro,
                   onSend: () => _send(),
                 ),
               ],
@@ -209,6 +235,45 @@ class _NoKeyBanner extends StatelessWidget {
             ),
             icon: const Icon(Icons.settings),
             label: const Text('Set key'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProRequiredBanner extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      color: AppColors.primary.withValues(alpha: 0.10),
+      child: Row(
+        children: [
+          const Icon(Icons.workspace_premium, color: AppColors.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'The AI tutor is included with PipeSmart Pro.',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700, color: AppColors.text),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'A monthly allowance of questions, no API key needed.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => PaywallScreen.show(context),
+            icon: const Icon(Icons.workspace_premium),
+            label: const Text('Get Pro'),
           ),
         ],
       ),

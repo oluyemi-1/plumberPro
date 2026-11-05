@@ -560,7 +560,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                     label: Text(svc.hasUserKey
                         ? 'Your key'
                         : svc.usingProxy
-                            ? 'Server proxy'
+                            ? 'Included with Pro'
                             : svc.usingBakedInKey
                                 ? 'Build-in key'
                                 : 'No key'),
@@ -579,7 +579,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 const SizedBox(height: 6),
                 Text(
                   svc.usingProxy
-                      ? 'AI calls route through PipeSmart\'s server, so no API key is required. You can still paste your own Anthropic key below to use your own quota and billing — that takes priority and goes direct to api.anthropic.com.'
+                      ? 'The AI tutor is included with PipeSmart Pro${svc.questionsLimit == null ? '' : ': ${svc.questionsLimit} questions a month'}. It runs through PipeSmart\'s server, so no API key is needed.${svc.questionsRemaining == null ? '' : ' ${svc.questionsRemaining} questions left this month.'} You can still paste your own Anthropic key below to use your own quota and billing — that takes priority and goes direct to api.anthropic.com.'
                       : svc.usingBakedInKey
                           ? 'This build was compiled with a built-in demo key. Anyone with the APK can extract it — only ship this build to closed testing tracks. You can override with your own key below.'
                           : 'Paste your Anthropic API key to enable the in-app AI tutor. Stored locally on this device only — never sent anywhere except api.anthropic.com.',
@@ -643,6 +643,11 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 const SizedBox(height: 14),
                 Text('Model',
                     style: Theme.of(context).textTheme.titleMedium),
+                if (svc.usingProxy)
+                  Text(
+                    'The included allowance always uses Haiku 5.5. This choice applies only when you use your own key.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,

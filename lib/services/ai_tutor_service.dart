@@ -5,12 +5,17 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Singleton client for the Anthropic Messages API. Manages the user-supplied
-/// API key, drives the AI tutor chat and exposes message state for the UI.
+import 'pro_entitlement.dart';
+import 'purchase_proof.dart';
+
+/// Singleton client for the Anthropic Messages API. Drives the AI tutor chat
+/// and photo diagnosis and exposes message state for the UI.
 ///
-/// Privacy: the key is stored locally on the device only via shared_preferences
-/// and is sent directly to api.anthropic.com from the device. No third-party
-/// proxy is used.
+/// Three routes, in priority order:
+///   • The user's own key, stored locally and sent direct to api.anthropic.com.
+///   • The PipeSmart proxy (production builds): included with Pro, metered per
+///     subscription by the server, no key on the device.
+///   • A build-time demo key for closed test tracks.
 class AiMessage {
   final String role; // 'user' or 'assistant'
   final String content;
@@ -22,6 +27,57 @@ class AiMessage {
   });
 }
 
+/// Server-issued proof that this device's Pro subscription may use the
+/// included AI allowance, plus the latest counters the server reported.
+class AiEntitlement {
+  final String token;
+  final DateTime expiresAt;
+  final int? limit;
+  final int? used;
+  final DateTime? resetsAt;
+
+  const AiEntitlement({
+    required this.token,
+    required this.expiresAt,
+    this.limit,
+    this.used,
+    this.resetsAt,
+  });
+
+  int? get remaining {
+    if (limit == null || used == null) return null;
+    final left = limit! - used!;
+    return left < 0 ? 0 : left;
+  }
+
+  AiEntitlement withUsage({int? limit, int? used, DateTime? resetsAt}) =>
+      AiEntitlement(
+        token: token,
+        expiresAt: expiresAt,
+        limit: limit ?? this.limit,
+        used: used ?? this.used,
+        resetsAt: resetsAt ?? this.resetsAt,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'token': token,
+        'expires_at': expiresAt.toIso8601String(),
+        'limit': limit,
+        'used': used,
+        'resets_at': resetsAt?.toIso8601String(),
+      };
+
+  static AiEntitlement fromJson(Map<String, dynamic> m) => AiEntitlement(
+        token: m['token'] as String,
+        expiresAt: DateTime.parse(m['expires_at'] as String),
+        limit: m['limit'] as int?,
+        used: m['used'] as int?,
+        resetsAt: m['resets_at'] == null
+            ? null
+            : DateTime.tryParse(m['resets_at'] as String),
+      );
+}
+
 class AiTutorService extends ChangeNotifier {
   AiTutorService._();
   static final AiTutorService instance = AiTutorService._();
@@ -29,6 +85,9 @@ class AiTutorService extends ChangeNotifier {
   static const _kKey = 'anthropic_api_key';
   static const _kModel = 'anthropic_model';
   static const _kCachedHits = 'anthropic_cache_hits';
+  static const _kEntitlement = 'ai_entitlement_v1';
+  static const _proRequiredMessage =
+      'The AI tutor is included with PipeSmart Pro. Subscribe to start asking questions.';
   static const _endpoint = 'https://api.anthropic.com/v1/messages';
   static const _apiVersion = '2023-06-01';
 
@@ -57,22 +116,31 @@ class AiTutorService extends ChangeNotifier {
   static const _proxyAppKey = String.fromEnvironment('PROXY_APP_KEY');
 
   /// Default model — fast and inexpensive, good enough for in-app tutoring.
-  static const _defaultModel = 'claude-haiku-4-5-20251001';
-  // Higher-quality alternative the user can pick in Settings.
+  static const _defaultModel = 'claude-haiku-5-5';
+
+  /// The model the included Pro allowance uses. The proxy only forwards this
+  /// one; the picker in Settings applies to the user's own key.
+  static const proxyModel = 'claude-haiku-5-5';
+
+  /// How many recent messages are sent with each request. Older turns stay
+  /// visible in the chat but are not resent, which bounds the cost per turn.
+  static const historyWindow = 20;
+
+  // Alternatives the user can pick in Settings when using their own key.
   static const availableModels = <AiModelOption>[
     AiModelOption(
-      id: 'claude-haiku-4-5-20251001',
-      label: 'Haiku 4.5 — fast & cheap',
+      id: 'claude-haiku-5-5',
+      label: 'Haiku 5.5 — fast & cheap',
       description: 'Best for everyday plumbing Q&A. Lowest cost.',
     ),
     AiModelOption(
-      id: 'claude-sonnet-4-6',
-      label: 'Sonnet 4.6 — balanced',
+      id: 'claude-sonnet-5-5',
+      label: 'Sonnet 5.5 — balanced',
       description: 'Better reasoning for complex design / regs questions.',
     ),
     AiModelOption(
-      id: 'claude-opus-4-7',
-      label: 'Opus 4.7 — best reasoning',
+      id: 'claude-opus-5-5',
+      label: 'Opus 5.5 — best reasoning',
       description: 'Highest cost. Save for the toughest synoptic questions.',
     ),
   ];
@@ -84,6 +152,7 @@ class AiTutorService extends ChangeNotifier {
   String? _lastError;
   int _cacheHits = 0;
   final List<AiMessage> _messages = [];
+  AiEntitlement? _entitlement;
 
   String? get apiKey => _apiKey;
 
@@ -110,6 +179,17 @@ class AiTutorService extends ChangeNotifier {
   /// with a key (user / baked-in).
   bool get hasKey => hasProxy || effectiveApiKey != null;
 
+  /// True when the only available route is the proxy and this device has no
+  /// active Pro: the UI should offer the paywall instead of a key field.
+  bool get needsPro => usingProxy && !ProEntitlement.instance.isPro;
+
+  /// Questions left this month on the included allowance, once the server
+  /// has reported it. Null when not on the proxy or not yet known.
+  int? get questionsRemaining => usingProxy ? _entitlement?.remaining : null;
+  int? get questionsLimit => usingProxy ? _entitlement?.limit : null;
+  DateTime? get allowanceResetsAt =>
+      usingProxy ? _entitlement?.resetsAt : null;
+
   /// Selects how the next request will be routed.
   ///   • If the user supplied their own key, use it (direct to Anthropic).
   ///   • Else if a proxy is configured, route via the proxy.
@@ -125,33 +205,30 @@ class AiTutorService extends ChangeNotifier {
   bool get usingBakedInKey =>
       !hasUserKey && !hasProxy && hasBakedInKey;
 
-  /// Endpoint for the next request — proxy or direct Anthropic.
-  Uri _endpointFor() {
-    if (usingProxy) {
-      // Proxy exposes a single /messages route mirroring the upstream API.
-      final base = _proxyUrl.endsWith('/')
-          ? _proxyUrl.substring(0, _proxyUrl.length - 1)
-          : _proxyUrl;
-      return Uri.parse('$base/messages');
-    }
-    return Uri.parse(_endpoint);
+  /// A proxy route: `/messages` mirrors the upstream API, `/entitlement`
+  /// exchanges the stored purchase proof for a metered entitlement token.
+  Uri _proxyUri(String path) {
+    final base = _proxyUrl.endsWith('/')
+        ? _proxyUrl.substring(0, _proxyUrl.length - 1)
+        : _proxyUrl;
+    return Uri.parse('$base$path');
   }
 
-  /// Headers for the next request — app-key when via proxy, else x-api-key.
-  Map<String, String> _headersFor() {
-    if (usingProxy) {
-      return {
+  Map<String, String> _proxyHeaders(String entitlement) => {
         'x-app-key': _proxyAppKey,
+        'x-entitlement': entitlement,
         'anthropic-version': _apiVersion,
         'content-type': 'application/json',
       };
-    }
-    return {
-      'x-api-key': effectiveApiKey!,
-      'anthropic-version': _apiVersion,
-      'content-type': 'application/json',
-    };
-  }
+
+  Map<String, String> _directHeaders() => {
+        'x-api-key': effectiveApiKey!,
+        'anthropic-version': _apiVersion,
+        'content-type': 'application/json',
+      };
+
+  /// Model for the next request: the proxy only serves [proxyModel].
+  String get requestModel => usingProxy ? proxyModel : _model;
 
   String get model => _model;
   bool get busy => _busy;
@@ -163,8 +240,21 @@ class AiTutorService extends ChangeNotifier {
     if (_loaded) return;
     final prefs = await SharedPreferences.getInstance();
     _apiKey = prefs.getString(_kKey);
-    _model = prefs.getString(_kModel) ?? _defaultModel;
+    final storedModel = prefs.getString(_kModel);
+    // Retired model ids (e.g. Haiku 4.5) fall back to the default.
+    _model = availableModels.any((m) => m.id == storedModel)
+        ? storedModel!
+        : _defaultModel;
     _cacheHits = prefs.getInt(_kCachedHits) ?? 0;
+    final rawEnt = prefs.getString(_kEntitlement);
+    if (rawEnt != null) {
+      try {
+        _entitlement =
+            AiEntitlement.fromJson(jsonDecode(rawEnt) as Map<String, dynamic>);
+      } catch (_) {
+        _entitlement = null;
+      }
+    }
     _loaded = true;
     notifyListeners();
   }
@@ -193,6 +283,7 @@ class AiTutorService extends ChangeNotifier {
     _apiKey = null;
     _model = _defaultModel;
     _cacheHits = 0;
+    _entitlement = null;
     _loaded = false;
     _messages.clear();
     await ensureLoaded();
@@ -213,6 +304,11 @@ class AiTutorService extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    if (needsPro) {
+      _lastError = _proRequiredMessage;
+      notifyListeners();
+      return false;
+    }
     final trimmed = text.trim();
     if (trimmed.isEmpty) return false;
 
@@ -226,8 +322,8 @@ class AiTutorService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final body = jsonEncode({
-        'model': _model,
+      final body = {
+        'model': requestModel,
         'max_tokens': 1024,
         // System sent as an array so we can attach a cache_control block.
         // The system prompt is large and constant — caching it cuts cost.
@@ -238,21 +334,17 @@ class AiTutorService extends ChangeNotifier {
             'cache_control': {'type': 'ephemeral'},
           },
         ],
-        'messages': _messages
+        'messages': requestWindow(_messages)
             .map((m) => {
                   'role': m.role,
                   'content': m.content,
                 })
             .toList(),
-      });
-      final res = await http.post(
-        _endpointFor(),
-        headers: _headersFor(),
-        body: body,
-      );
-      if (res.statusCode != 200) {
+      };
+      final res = await _post(body);
+      if (res == null || res.statusCode != 200) {
         _busy = false;
-        _lastError = _friendlyError(res.statusCode, res.body);
+        if (res != null) _lastError = _friendlyError(res.statusCode, res.body);
         // Roll back the user message so the chat reflects the failure.
         if (_messages.isNotEmpty && _messages.last.role == 'user') {
           _messages.removeLast();
@@ -278,9 +370,7 @@ class AiTutorService extends ChangeNotifier {
       final answer = buffer.toString().trim();
       _messages.add(AiMessage(
         role: 'assistant',
-        content: answer.isEmpty
-            ? 'No response — please try again.'
-            : answer,
+        content: answer.isEmpty ? _emptyAnswer(json) : answer,
         when: DateTime.now(),
       ));
       _busy = false;
@@ -310,6 +400,11 @@ class AiTutorService extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+    if (needsPro) {
+      _lastError = _proRequiredMessage;
+      notifyListeners();
+      return null;
+    }
     if (imageBytes.isEmpty) {
       _lastError = 'No image to analyse.';
       notifyListeners();
@@ -320,8 +415,8 @@ class AiTutorService extends ChangeNotifier {
     notifyListeners();
     try {
       final base64Image = base64Encode(imageBytes);
-      final body = jsonEncode({
-        'model': _model,
+      final body = {
+        'model': requestModel,
         'max_tokens': 1024,
         'system': [
           {
@@ -351,15 +446,11 @@ class AiTutorService extends ChangeNotifier {
             ],
           },
         ],
-      });
-      final res = await http.post(
-        _endpointFor(),
-        headers: _headersFor(),
-        body: body,
-      );
-      if (res.statusCode != 200) {
+      };
+      final res = await _post(body);
+      if (res == null || res.statusCode != 200) {
         _busy = false;
-        _lastError = _friendlyError(res.statusCode, res.body);
+        if (res != null) _lastError = _friendlyError(res.statusCode, res.body);
         notifyListeners();
         return null;
       }
@@ -381,7 +472,7 @@ class AiTutorService extends ChangeNotifier {
       _busy = false;
       notifyListeners();
       final answer = buffer.toString().trim();
-      return answer.isEmpty ? 'No response — please try again.' : answer;
+      return answer.isEmpty ? _emptyAnswer(json) : answer;
     } catch (e) {
       _busy = false;
       _lastError = 'Network error: $e';
@@ -390,7 +481,180 @@ class AiTutorService extends ChangeNotifier {
     }
   }
 
+  /// The recent slice of [all] to send upstream: at most [max] messages,
+  /// trimmed so the slice starts with a user turn as the API requires.
+  static List<AiMessage> requestWindow(List<AiMessage> all,
+      {int max = historyWindow}) {
+    var window = all.length > max ? all.sublist(all.length - max) : all;
+    while (window.isNotEmpty && window.first.role != 'user') {
+      window = window.sublist(1);
+    }
+    return window;
+  }
+
+  /// Fallback text when the model returned no text block.
+  static String _emptyAnswer(Map<String, dynamic> json) =>
+      json['stop_reason'] == 'refusal'
+          ? 'The assistant declined to answer that. Try rephrasing your question.'
+          : 'No response — please try again.';
+
+  /// Sends one Messages API request over the active route. In proxy mode
+  /// this attaches the entitlement token, refreshes it once if the server
+  /// rejects it, and records the allowance counters the server returns.
+  /// Returns null when no request could be made; [lastError] explains why.
+  Future<http.Response?> _post(Map<String, dynamic> body) async {
+    final encoded = jsonEncode(body);
+    if (!usingProxy) {
+      return http.post(Uri.parse(_endpoint),
+          headers: _directHeaders(), body: encoded);
+    }
+    var ent = await _ensureEntitlement();
+    if (ent == null) return null;
+    var res = await http.post(_proxyUri('/messages'),
+        headers: _proxyHeaders(ent.token), body: encoded);
+    if (res.statusCode == 401 &&
+        _proxyError(res.body).startsWith('entitlement')) {
+      ent = await _ensureEntitlement(force: true);
+      if (ent == null) return null;
+      res = await http.post(_proxyUri('/messages'),
+          headers: _proxyHeaders(ent.token), body: encoded);
+    }
+    if (res.statusCode == 200) await _recordAllowance(res.headers);
+    return res;
+  }
+
+  /// Returns a usable entitlement, fetching a fresh one from the proxy when
+  /// none is cached, the cached one is close to expiry, or [force] is set.
+  /// Sets [lastError] and returns null when the device is not entitled.
+  Future<AiEntitlement?> _ensureEntitlement({bool force = false}) async {
+    final now = DateTime.now();
+    final cached = _entitlement;
+    if (!force &&
+        cached != null &&
+        cached.expiresAt.isAfter(now.add(const Duration(hours: 1)))) {
+      return cached;
+    }
+    if (!ProEntitlement.instance.isPro) {
+      _lastError = _proRequiredMessage;
+      return null;
+    }
+    final proof = await PurchaseProof.load();
+    if (proof == null) {
+      _lastError =
+          'Your subscription could not be found on this device. Use Restore purchases in Settings, then try again.';
+      return null;
+    }
+    try {
+      final res = await http.post(
+        _proxyUri('/entitlement'),
+        headers: {
+          'x-app-key': _proxyAppKey,
+          'content-type': 'application/json',
+        },
+        body: jsonEncode({'platform': proof.platform, 'token': proof.token}),
+      );
+      if (res.statusCode == 200) {
+        final j = jsonDecode(res.body) as Map<String, dynamic>;
+        final ent = AiEntitlement(
+          token: j['entitlement'] as String,
+          expiresAt: DateTime.parse(j['expires_at'] as String),
+          limit: j['limit'] as int?,
+          used: j['used'] as int?,
+          resetsAt: DateTime.tryParse(j['resets_at'] as String? ?? ''),
+        );
+        await _saveEntitlement(ent);
+        return ent;
+      }
+      if (res.statusCode == 403) {
+        await _saveEntitlement(null);
+        _lastError =
+            'No active PipeSmart Pro subscription was found. If you have just subscribed, wait a minute and try again, or use Restore purchases.';
+        return null;
+      }
+      _lastError = _friendlyError(res.statusCode, res.body);
+    } catch (e) {
+      _lastError = 'Network error: $e';
+    }
+    // The server could not answer. A cached token that is still valid is
+    // better than failing outright — unless it was just rejected.
+    if (!force && cached != null && cached.expiresAt.isAfter(now)) {
+      _lastError = null;
+      return cached;
+    }
+    return null;
+  }
+
+  Future<void> _saveEntitlement(AiEntitlement? ent) async {
+    _entitlement = ent;
+    final prefs = await SharedPreferences.getInstance();
+    if (ent == null) {
+      await prefs.remove(_kEntitlement);
+    } else {
+      await prefs.setString(_kEntitlement, jsonEncode(ent.toJson()));
+    }
+  }
+
+  /// Keeps the allowance counters in step with the x-allowance-* headers the
+  /// proxy adds to every successful completion.
+  Future<void> _recordAllowance(Map<String, String> headers) async {
+    final ent = _entitlement;
+    final limit = int.tryParse(headers['x-allowance-limit'] ?? '');
+    final used = int.tryParse(headers['x-allowance-used'] ?? '');
+    if (ent == null || limit == null || used == null) return;
+    await _saveEntitlement(ent.withUsage(
+      limit: limit,
+      used: used,
+      resetsAt: DateTime.tryParse(headers['x-allowance-resets'] ?? ''),
+    ));
+  }
+
+  /// The `error` code in a proxy JSON error body, or '' if there is none.
+  static String _proxyError(String body) {
+    try {
+      final j = jsonDecode(body);
+      return j is Map ? (j['error'] as String? ?? '') : '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _exhaustedMessage(String body) {
+    int? limit;
+    DateTime? resets;
+    try {
+      final j = jsonDecode(body) as Map<String, dynamic>;
+      limit = j['limit'] as int?;
+      resets = DateTime.tryParse(j['resets_at'] as String? ?? '');
+    } catch (_) {}
+    final ent = _entitlement;
+    if (ent != null) {
+      _entitlement = ent.withUsage(limit: limit, used: limit, resetsAt: resets);
+    }
+    final n = limit ?? ent?.limit;
+    final local = resets?.toLocal();
+    final when = local == null
+        ? 'at the start of next month'
+        : 'on ${local.day}/${local.month}/${local.year}';
+    return n == null
+        ? 'You have used all of your AI questions for this month. Your allowance resets $when.'
+        : 'You have used all $n AI questions for this month. Your allowance resets $when.';
+  }
+
   String _friendlyError(int code, String body) {
+    if (usingProxy) {
+      switch (_proxyError(body)) {
+        case 'allowance_exhausted':
+          return _exhaustedMessage(body);
+        case 'invalid_app_key':
+          return 'This version of PipeSmart is no longer authorised for the AI tutor. Please update the app.';
+        case 'disabled':
+        case 'store_unavailable':
+        case 'store_not_configured':
+          return 'The AI tutor is temporarily unavailable. Please try again later.';
+        case 'rate_limited':
+          return 'Too many requests. Wait a moment and try again.';
+      }
+    }
     if (code == 401) return 'API key rejected. Check the key in Settings.';
     if (code == 403) return 'API key does not have permission for this model.';
     if (code == 404) return 'Model not found. Try selecting a different one.';

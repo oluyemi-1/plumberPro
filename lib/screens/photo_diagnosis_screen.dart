@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../services/ai_tutor_service.dart';
 import '../services/tts_service.dart';
 import '../theme.dart';
+import 'paywall_screen.dart';
 import 'settings_screen.dart';
 
 /// Take or pick a photo and have Claude diagnose what's shown — boiler
@@ -146,12 +147,13 @@ class _PhotoDiagnosisScreenState extends State<PhotoDiagnosisScreen> {
             padding: const EdgeInsets.all(14),
             children: [
               if (!svc.hasKey) _NoKeyCard(),
-              if (svc.hasKey) _IntroCard(),
+              if (svc.needsPro) _ProRequiredCard(),
+              if (svc.hasKey && !svc.needsPro) _IntroCard(),
               const SizedBox(height: 12),
               _PickerRow(
                 onCamera: () => _pick(ImageSource.camera),
                 onGallery: () => _pick(ImageSource.gallery),
-                enabled: svc.hasKey && !_busy,
+                enabled: svc.hasKey && !svc.needsPro && !_busy,
               ),
               const SizedBox(height: 14),
               if (_imageBytes != null) ...[
@@ -174,7 +176,9 @@ class _PhotoDiagnosisScreenState extends State<PhotoDiagnosisScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: _busy || !svc.hasKey ? null : _analyse,
+                        onPressed: _busy || !svc.hasKey || svc.needsPro
+                            ? null
+                            : _analyse,
                         icon: _busy
                             ? const SizedBox(
                                 width: 16,
@@ -253,6 +257,41 @@ class _NoKeyCard extends StatelessWidget {
               ),
               icon: const Icon(Icons.settings),
               label: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProRequiredCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: AppColors.primary.withValues(alpha: 0.08),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Icon(Icons.workspace_premium, color: AppColors.primary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Photo diagnosis is included with PipeSmart Pro',
+                    style: Theme.of(context).textTheme.titleMedium),
+              ),
+            ]),
+            const SizedBox(height: 6),
+            const Text(
+              'Each photo counts as one question from your monthly AI allowance. No API key needed.',
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: () => PaywallScreen.show(context),
+              icon: const Icon(Icons.workspace_premium),
+              label: const Text('Get Pro'),
             ),
           ],
         ),

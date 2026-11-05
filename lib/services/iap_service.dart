@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'pro_entitlement.dart';
+import 'purchase_proof.dart';
 import 'redemption_service.dart';
 
 /// A purchasable PipeSmart Pro subscription tier.
@@ -32,6 +33,10 @@ class ProPlan {
 /// trade-off for an account-less app; precise expiry would require a backend
 /// validating the App Store / Play receipt. Documented limitation, revisit
 /// in a future version if a backend is added.
+///
+/// The AI tutor allowance is the one exception: every grant also stores a
+/// [PurchaseProof], which the proxy server verifies with the store before
+/// metering questions.
 class IapService extends ChangeNotifier {
   IapService._();
   static final IapService instance = IapService._();
@@ -160,6 +165,7 @@ class IapService extends ChangeNotifier {
   Future<void> _grantFor(PurchaseDetails purchase) async {
     final plan = planForProduct(purchase.productID);
     if (plan == null) return;
+    await _saveProof(purchase);
     final until = RedemptionService.addMonths(DateTime.now(), plan.months);
     // Only extend — never shorten — an existing entitlement.
     final current = ProEntitlement.instance.expiresAt;
@@ -167,6 +173,21 @@ class IapService extends ChangeNotifier {
     if (current != null && current.isAfter(until)) return;
     await ProEntitlement.instance.grantPro(until: until);
     notifyListeners();
+  }
+
+  /// Remember what the proxy server needs to confirm this subscription with
+  /// the store: the purchase token on Android, the transaction id on iOS.
+  Future<void> _saveProof(PurchaseDetails purchase) async {
+    final isIos = defaultTargetPlatform == TargetPlatform.iOS;
+    final token = isIos
+        ? purchase.purchaseID
+        : purchase.verificationData.serverVerificationData;
+    if (token == null || token.isEmpty) return;
+    await PurchaseProof.save(PurchaseProof(
+      platform: isIos ? 'ios' : 'android',
+      token: token,
+      productId: purchase.productID,
+    ));
   }
 
   @override

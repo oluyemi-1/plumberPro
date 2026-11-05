@@ -2,15 +2,17 @@
   "name": "plumber-pro-proxy",
   "version": "1.0.0",
   "private": true,
-  "description": "Anthropic API proxy for Plumber Pro — Cloudflare Worker.",
+  "description": "Anthropic API proxy with subscription-metered allowances for PipeSmart — Cloudflare Worker.",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240909.0",
     "typescript": "^5.5.0",
     "wrangler": "^3.78.0"
-  }
+  },
+  "type": "module"
 }

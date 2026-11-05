@@ -1,44 +1,45 @@
-# Plumber Pro AI proxy
+# PipeSmart AI proxy
 
-A small Cloudflare Worker that proxies Anthropic Messages API calls for the
-Plumber Pro mobile app. The Anthropic API key lives **only** here on the
-server — never in the public app build.
-
-## Why a proxy is required for public launch
-
-A `--dart-define`-baked key is fine for **closed** Google Play tracks, but
-once the app is on the production track anyone can install the APK and
-extract the key. A proxy keeps the key on the server and gates each call:
+A small Cloudflare Worker that sits between the PipeSmart app and the
+Anthropic Messages API. The Anthropic API key lives **only** here, and the
+Worker meters a monthly question allowance per Pro subscription so the AI
+tutor can be included in the subscription without user accounts.
 
 ```
-[ Plumber Pro app ]
-        │  POST /messages
-        │  x-app-key: <shared secret>
-        ▼
+[ PipeSmart app ]
+   │  POST /entitlement  { platform, token }        x-app-key
+   │  POST /messages     (Messages API body)        x-app-key, x-entitlement
+   ▼
 [ Cloudflare Worker (this) ]
-        │  - validates app-key
-        │  - rate-limits per IP (KV)
-        │  - caps max_tokens
-        │  - allow-lists models
-        ▼
+   │  - app-key gate + per-IP rate limit (KV)
+   │  - /entitlement: verifies the purchase with Google Play / App Store /
+   │    the licence-code HMAC, returns a signed entitlement token
+   │  - /messages: checks the token, checks the monthly counter (KV),
+   │    caps max_tokens, allow-lists models, forwards, counts one question
+   ▼
 [ api.anthropic.com ]
 ```
 
-## What this Worker does
+## Endpoints
 
-- Single endpoint `POST /messages` that mirrors the Anthropic Messages API
-- App-key gate (`x-app-key` header) so the URL alone is not enough
-- Per-IP rate limit (default 30 req/min) using a Cloudflare KV namespace
-- Server-side `max_tokens` cap of 4096 (cheaper, harder to weaponise)
-- Server-side model allow-list — the proxy only forwards to your approved
-  Claude model ids
-- Returns the upstream Anthropic response unchanged (status, body)
+| Route | Purpose |
+|---|---|
+| `GET /health` | Returns `ok`. |
+| `POST /entitlement` | Body `{ "platform": "android" \| "ios" \| "code", "token": "<purchase token / transaction id / licence code>" }`. Returns `{ entitlement, expires_at, plan, limit, used, remaining, resets_at }`, or `403 not_entitled`, or `503 store_unavailable` when the store could not be reached. |
+| `POST /messages` | Anthropic Messages API body plus `x-entitlement` header. Forwards upstream and adds `x-allowance-limit`, `x-allowance-used`, `x-allowance-remaining`, `x-allowance-resets` headers. Returns `401 entitlement_invalid` (app should refresh) or `402 allowance_exhausted`. |
+
+Entitlement tokens last at most 7 days, so a cancelled subscription loses the
+allowance within a week. Counters reset on the first of each UTC month.
 
 ## Prerequisites
 
-- A free Cloudflare account (https://dash.cloudflare.com)
-- Node.js 18+ on your laptop
-- An Anthropic API key on the account that will pay for usage
+- A free Cloudflare account
+- Node.js 20+ (`npm test` uses Node's built-in TypeScript support, 22.6+)
+- An Anthropic API key
+- Google Play: a service account JSON key with "View financial data" on the
+  app (Play Console → Users and permissions)
+- App Store: an In-App Purchase key (.p8) with its Key ID and Issuer ID
+  (App Store Connect → Users and Access → Integrations → In-App Purchase)
 
 ## One-time setup
 
@@ -48,120 +49,80 @@ npm install
 npx wrangler login
 ```
 
-`wrangler login` opens a browser tab to authorise. Sign in to Cloudflare,
-authorise, return to the terminal.
-
-### Create the rate-limit KV namespace
+### Create the KV namespace
 
 ```bash
-npx wrangler kv:namespace create RATE_LIMIT_KV
+npx wrangler kv namespace create RATE_LIMIT_KV
 ```
 
-Wrangler prints something like:
-
-```
-[[kv_namespaces]]
-binding = "RATE_LIMIT_KV"
-id = "abc123def456…"
-```
-
-Copy that `id` value into `wrangler.toml` (replacing
-`REPLACE_WITH_KV_NAMESPACE_ID`).
+Copy the printed `id` into `wrangler.toml`, replacing
+`REPLACE_WITH_KV_NAMESPACE_ID`. The namespace holds rate-limit buckets,
+monthly question counters and the cached Google OAuth token.
 
 ### Set the secrets
 
 ```bash
-npx wrangler secret put ANTHROPIC_API_KEY
-# (paste your sk-ant-… key when prompted)
-
-npx wrangler secret put APP_SHARED_KEY
-# (paste a long random string; keep it safe — you will bake the same
-#  value into the Plumber Pro app build below)
+npx wrangler secret put ANTHROPIC_API_KEY          # paste sk-ant-…
+npx wrangler secret put APP_SHARED_KEY             # long random string, baked into the app build
+npx wrangler secret put ENTITLEMENT_SECRET         # long random string, signs entitlement tokens
+npx wrangler secret put PLAY_SERVICE_ACCOUNT_JSON < /path/to/service-account.json
+npx wrangler secret put APPLE_IAP_KEY_P8 < /path/to/SubscriptionKey_XXXXXXXXXX.p8
+npx wrangler secret put APPLE_KEY_ID               # e.g. XXXXXXXXXX
+npx wrangler secret put APPLE_ISSUER_ID            # UUID from the In-App Purchase keys page
+npx wrangler secret put REDEMPTION_SECRET          # same value as RedemptionService._secret in the app (optional)
 ```
 
-A good `APP_SHARED_KEY` is a 32-character random string, e.g. the output of:
+Random strings:
 ```bash
-node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 ```
 
 ### Deploy
 
 ```bash
+npm run typecheck && npm test
 npx wrangler deploy
+curl https://plumber-pro-proxy.<subdomain>.workers.dev/health   # -> ok
 ```
 
-Wrangler prints the live URL, something like:
-```
-https://plumber-pro-proxy.<your-subdomain>.workers.dev
-```
-
-Quick sanity check:
-```bash
-curl https://plumber-pro-proxy.<subdomain>.workers.dev/health
-# -> ok
-```
-
-## Pointing the Plumber Pro app at the proxy
-
-Build the production APK / iOS archive with two `--dart-define` flags:
+## Pointing the app at the proxy
 
 ```bash
 flutter build appbundle --release \
-  --dart-define=PROXY_URL=https://plumber-pro-proxy.<your-subdomain>.workers.dev \
-  --dart-define=PROXY_APP_KEY=<the same APP_SHARED_KEY value>
+  --dart-define=PROXY_URL=https://plumber-pro-proxy.<subdomain>.workers.dev \
+  --dart-define=PROXY_APP_KEY=<the APP_SHARED_KEY value>
 ```
 
-The app will route every AI call through the proxy. Users do not need to
-provide their own Anthropic API key; if they do, the app prefers the user's
-own key (sent direct to Anthropic) over the proxy.
+In this mode the app asks the Worker for an entitlement using the purchase
+proof it stored when Pro was granted (Play purchase token, App Store
+transaction id, or licence code), then sends every tutor and photo-diagnosis
+request with that token. Users who paste their own Anthropic key bypass the
+proxy entirely and are not metered.
 
-## Cost & quotas
+## Tuning (`wrangler.toml` `[vars]`)
 
-- Cloudflare Workers free tier: 100,000 requests / day
-- KV reads: free under 100,000 / day
-- Anthropic charges per token — see https://www.anthropic.com/pricing
-
-The Worker itself essentially costs nothing for app-launch volumes. The
-Anthropic bill is the only meaningful cost.
-
-## Tuning
-
-- **Rate limit**: `RATE_LIMIT_PER_MIN` env var. Lower it to harden against
-  abuse; raise it if your real users complain. Set via `wrangler.toml`
-  `[vars]` block or `wrangler secret put`.
-- **Allowed models**: `ALLOWED_MODELS` env var, comma-separated. Default is
-  Haiku 4.5 / Sonnet 4.6 / Opus 4.7.
-- **Spend cap**: set a workspace-level monthly cap in
-  https://console.anthropic.com/ → Settings → Limits. Recommended even with
-  the proxy in place — last line of defence.
+- `MONTHLY_QUESTIONS` — questions per subscription per month. Default 300.
+- `ALLOWED_MODELS` — comma-separated. Default `claude-haiku-5-5`; the app
+  always requests this model when on the proxy.
+- `RATE_LIMIT_PER_MIN` — per-IP request limit. Default 30.
+- `DISABLED` — set to `"1"` to refuse every call (kill switch). Deploy to apply.
+- Anthropic spend cap: Console → Settings → Limits. Last line of defence.
 
 ## Rotating credentials
 
-If the `APP_SHARED_KEY` ever leaks (or you suspect it has):
-
-```bash
-npx wrangler secret put APP_SHARED_KEY
-# (new value)
-```
-
-…then ship a new app build with the new value baked in. Old builds will
-get a 401 on every call until the user updates.
+- `APP_SHARED_KEY` leaked: `wrangler secret put APP_SHARED_KEY`, ship a new
+  app build. Old builds get `401 invalid_app_key` until updated.
+- `ENTITLEMENT_SECRET` rotated: every device re-verifies with the store on
+  its next request. No app build needed.
+- Store credentials: re-run the matching `secret put`.
 
 ## Local development
 
 ```bash
 npx wrangler dev
+npm test        # token signing, month maths, licence-code HMAC
 ```
 
-Worker runs on `http://localhost:8787`. You can point a debug build of the
-app at it via `--dart-define=PROXY_URL=http://10.0.2.2:8787` (Android
-emulator alias for the host machine) and the same `PROXY_APP_KEY` you set
-locally in `.dev.vars`:
-
-```
-# server/.dev.vars
-ANTHROPIC_API_KEY=sk-ant-…
-APP_SHARED_KEY=local-dev-key
-```
-
-`.dev.vars` is gitignored.
+Put local values in `server/.dev.vars` (gitignored), e.g.
+`ANTHROPIC_API_KEY`, `APP_SHARED_KEY`, `ENTITLEMENT_SECRET`, and point a
+debug build at `http://10.0.2.2:8787` (Android emulator alias for the host).

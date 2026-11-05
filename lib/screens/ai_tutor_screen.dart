@@ -362,8 +362,10 @@ class _StarterScreen extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium),
                 ]),
                 const SizedBox(height: 4),
-                const Text(
-                  'Your API key and chat are sent directly to api.anthropic.com from this device. No third-party server is used. The chat is not saved between launches — clear it any time with the bin icon.',
+                Text(
+                  AiTutorService.instance.usingProxy
+                      ? 'Your questions and this session\'s recent chat history are relayed through PipeSmart\'s server to our AI provider to produce the answer. The server forwards them without storing them and keeps only a monthly question count against your subscription; the Privacy policy names the provider. The chat is not saved between launches — clear it any time with the bin icon.'
+                      : 'Your API key and chat are sent directly to api.anthropic.com from this device. No third-party server is used. The chat is not saved between launches — clear it any time with the bin icon.',
                 ),
               ],
             ),

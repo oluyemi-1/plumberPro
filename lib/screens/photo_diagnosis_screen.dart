@@ -554,8 +554,10 @@ class _PrivacyNote extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium),
             ]),
             const SizedBox(height: 4),
-            const Text(
-              'Photos are sent directly to api.anthropic.com from this device for analysis only. The image is not stored on Anthropic servers beyond what their standard message API retains. Avoid uploading any image that contains personal data or sensitive customer information.',
+            Text(
+              AiTutorService.instance.usingProxy
+                  ? 'Photos are relayed through PipeSmart\'s server to our AI provider for analysis only. The server forwards the image without storing it, and the provider keeps it no longer than its standard API retains; the Privacy policy names the provider. Avoid uploading any image that contains personal data or sensitive customer information.'
+                  : 'Photos are sent directly to api.anthropic.com from this device for analysis only. The image is not stored on Anthropic servers beyond what their standard message API retains. Avoid uploading any image that contains personal data or sensitive customer information.',
             ),
           ],
         ),

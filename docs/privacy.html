@@ -18,17 +18,20 @@
 <body>
 <header>
   <h1>PipeSmart — Privacy policy</h1>
-  <div class="sub">Published by Karitec · Last updated: 9 May 2026</div>
+  <div class="sub">Published by Karitec · Last updated: 5 November 2026</div>
   <nav><a href="terms.html">Terms of use</a></nav>
 </header>
 
 <h2>Summary in plain English</h2>
 <p>PipeSmart is a UK plumber's training and business app that runs almost entirely
-   on your device. We do not operate a server that collects your data. The only
-   data that leaves your device is:</p>
+   on your device. We do not operate a server that collects your personal data.
+   The only data that leaves your device is:</p>
 <ul>
   <li>What you explicitly type or photograph for the optional AI tutor and photo
-      fault diagnosis features (sent over HTTPS to Anthropic Claude).</li>
+      fault diagnosis features. For Pro subscribers this is relayed through a
+      small server we operate (hosted on Cloudflare) to our AI provider,
+      Anthropic; the relay forwards it without storing it. See "AI features"
+      below.</li>
   <li>Files (PDFs, CSVs, backup zips) that you actively share via your device's
       share sheet to email, cloud storage, or another app.</li>
 </ul>
@@ -77,19 +80,33 @@
 <p>These are local Android / iOS notifications. We do not send push notifications
    from a server.</p>
 
-<h2>What we send to Anthropic when you use AI features</h2>
+<h2>AI features: what is sent, and to whom</h2>
 <p>When you use the AI tutor chat or photo fault diagnosis, the following data is
-   sent over HTTPS to <code>api.anthropic.com</code>:</p>
+   sent over HTTPS to our AI provider, Anthropic (<code>api.anthropic.com</code>):</p>
 <ul>
   <li>The text of your question or messages in the current chat</li>
-  <li>The chat history of the current session (so the model has context)</li>
+  <li>The recent chat history of the current session (so the model has context)</li>
   <li>Any image you choose to attach (encoded in the request body)</li>
 </ul>
 <p>Anthropic processes these requests under their own privacy policy at
-   <a href="https://www.anthropic.com/privacy">anthropic.com/privacy</a>. We
-   never see this data — it is sent directly from your device to Anthropic
-   using your API key (or, if your build was distributed with a built-in demo
-   key, that key).</p>
+   <a href="https://www.anthropic.com/privacy">anthropic.com/privacy</a>.
+   Anthropic is based in the United States, so this is an international
+   transfer of any personal data contained in what you send.</p>
+<p><strong>Included allowance (Pro subscribers).</strong> Requests are relayed
+   through a server operated by Karitec on Cloudflare's network, so that our
+   provider credentials never leave the server. The relay forwards your request
+   and the reply without storing either and does not log their contents. To
+   meter the monthly allowance it stores only an opaque identifier derived from
+   your store subscription (a hash of the Google Play purchase token, the Apple
+   original transaction identifier, or a hash of a licence code), the plan name,
+   and a count of questions used in the current month. These counters expire
+   automatically about 40 days after the month ends. To confirm that the
+   subscription is active, the relay sends your purchase token or transaction
+   identifier to Google Play or the App Store respectively. No sign-in or other
+   account information is involved.</p>
+<p><strong>Your own API key.</strong> If you paste your own API key instead,
+   requests go directly from your device to Anthropic and do not pass through
+   our server. We never see this data.</p>
 
 <h2>Anthropic API key</h2>
 <p>If you provide your own Anthropic API key, it is saved on this device only.

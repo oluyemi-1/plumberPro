@@ -557,7 +557,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                   runSpacing: 4,
                   children: [
                     const Icon(Icons.auto_awesome, color: AppColors.primary),
-                    Text('AI tutor (Anthropic)',
+                    Text('AI tutor',
                         style: Theme.of(context).textTheme.titleLarge),
                     Chip(
                       label: Text(svc.hasUserKey
@@ -581,7 +581,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 const SizedBox(height: 6),
                 Text(
                   svc.usingProxy
-                      ? 'The AI tutor is included with PipeSmart Pro${svc.questionsLimit == null ? '' : ': ${svc.questionsLimit} questions a month'}. It runs through PipeSmart\'s server, so no API key is needed.${svc.questionsRemaining == null ? '' : ' ${svc.questionsRemaining} questions left this month.'} You can still paste your own Anthropic key below to use your own quota and billing — that takes priority and goes direct to api.anthropic.com.'
+                      ? 'The AI tutor is included with PipeSmart Pro${svc.questionsLimit == null ? '' : ': ${svc.questionsLimit} questions a month'}. It runs through PipeSmart\'s server, so no API key is needed.${svc.questionsRemaining == null ? '' : ' ${svc.questionsRemaining} questions left this month.'} Advanced users can paste their own API key below to use their own quota instead.'
                       : svc.usingBakedInKey
                           ? 'This build was compiled with a built-in demo key. Anyone with the APK can extract it — only ship this build to closed testing tracks. You can override with your own key below.'
                           : 'Paste your Anthropic API key to enable the in-app AI tutor. Stored locally on this device only — never sent anywhere except api.anthropic.com.',
@@ -593,7 +593,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                   enabled: _editing || !svc.hasUserKey,
                   decoration: InputDecoration(
                     labelText: 'API key',
-                    hintText: 'sk-ant-api03-…',
+                    hintText: 'Paste your key',
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscure
@@ -642,38 +642,36 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                       label: const Text('Clear'),
                     ),
                 ]),
-                const SizedBox(height: 14),
-                Text('Model',
-                    style: Theme.of(context).textTheme.titleMedium),
-                if (svc.usingProxy)
+                // The model picker only matters for a user-supplied key; the
+                // included allowance is fixed server-side.
+                if (!svc.usingProxy || svc.hasUserKey) ...[
+                  const SizedBox(height: 14),
+                  Text('Model',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: AiTutorService.availableModels.map((m) {
+                      final selected = svc.model == m.id;
+                      return ChoiceChip(
+                        label: Text(m.label),
+                        selected: selected,
+                        onSelected: (_) => svc.setModel(m.id),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
-                    'The included allowance always uses Haiku 5.5. This choice applies only when you use your own key.',
+                    AiTutorService.availableModels
+                        .firstWhere(
+                          (m) => m.id == svc.model,
+                          orElse: () => AiTutorService.availableModels.first,
+                        )
+                        .description,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: AiTutorService.availableModels.map((m) {
-                    final selected = svc.model == m.id;
-                    return ChoiceChip(
-                      label: Text(m.label),
-                      selected: selected,
-                      onSelected: (_) => svc.setModel(m.id),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  AiTutorService.availableModels
-                      .firstWhere(
-                        (m) => m.id == svc.model,
-                        orElse: () =>
-                            AiTutorService.availableModels.first,
-                      )
-                      .description,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                ],
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(10),

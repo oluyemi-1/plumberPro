@@ -48,7 +48,7 @@ class LegalScreen extends StatelessWidget {
                   _LegalSection(
                     title: 'What we send to Anthropic when you use AI features',
                     body:
-                        'When you use the AI tutor chat or photo fault diagnosis, your typed question, the chat history of that session, and any image you choose to attach are sent over HTTPS to api.anthropic.com using your API key. The image is base64-encoded and sent within the request body. Anthropic processes the request under its own privacy policy at https://www.anthropic.com/privacy. We never see this data — it goes directly from your device to Anthropic.',
+                        'When you use the AI tutor chat or photo fault diagnosis, your typed question, the recent chat history of that session, and any image you choose to attach are sent over HTTPS to our AI provider, Anthropic, which processes them under its own privacy policy at https://www.anthropic.com/privacy. With the allowance included in PipeSmart Pro, requests are relayed through a server we operate on Cloudflare so that our provider credentials never leave the server; the relay forwards your request and the reply without storing them and keeps only an opaque subscription identifier and a monthly question count. To confirm your subscription it sends your purchase token to Google Play or the App Store. If you use your own API key instead, requests go directly from your device to Anthropic and never touch our server.',
                   ),
                   _LegalSection(
                     title: 'Anthropic API key',

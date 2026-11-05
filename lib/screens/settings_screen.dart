@@ -549,33 +549,35 @@ class _AiTutorCardState extends State<_AiTutorCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  const Icon(Icons.auto_awesome,
-                      color: AppColors.primary),
-                  const SizedBox(width: 8),
-                  Text('AI tutor (Anthropic)',
-                      style: Theme.of(context).textTheme.titleLarge),
-                  const Spacer(),
-                  Chip(
-                    label: Text(svc.hasUserKey
-                        ? 'Your key'
-                        : svc.usingProxy
-                            ? 'Included with Pro'
-                            : svc.usingBakedInKey
-                                ? 'Build-in key'
-                                : 'No key'),
-                    backgroundColor: (svc.hasKey
-                            ? Colors.green
-                            : Colors.redAccent)
-                        .withValues(alpha: 0.15),
-                    labelStyle: TextStyle(
-                      color:
-                          svc.hasKey ? Colors.green : Colors.redAccent,
-                      fontWeight: FontWeight.w700,
+                // Wrap, not Row: on phone widths the status chip must drop to
+                // its own line rather than overflow the edge.
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    const Icon(Icons.auto_awesome, color: AppColors.primary),
+                    Text('AI tutor (Anthropic)',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    Chip(
+                      label: Text(svc.hasUserKey
+                          ? 'Your key'
+                          : svc.usingProxy
+                              ? 'Included with Pro'
+                              : svc.usingBakedInKey
+                                  ? 'Build-in key'
+                                  : 'No key'),
+                      backgroundColor:
+                          (svc.hasKey ? Colors.green : Colors.redAccent)
+                              .withValues(alpha: 0.15),
+                      labelStyle: TextStyle(
+                        color: svc.hasKey ? Colors.green : Colors.redAccent,
+                        fontWeight: FontWeight.w700,
+                      ),
+                      visualDensity: VisualDensity.compact,
                     ),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ]),
+                  ],
+                ),
                 const SizedBox(height: 6),
                 Text(
                   svc.usingProxy
@@ -588,7 +590,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 TextField(
                   controller: _keyCtrl,
                   obscureText: _obscure,
-                  enabled: _editing || !svc.hasKey,
+                  enabled: _editing || !svc.hasUserKey,
                   decoration: InputDecoration(
                     labelText: 'API key',
                     hintText: 'sk-ant-api03-…',
@@ -604,7 +606,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                 ),
                 const SizedBox(height: 10),
                 Row(children: [
-                  if (svc.hasKey && !_editing)
+                  if (svc.hasUserKey && !_editing)
                     OutlinedButton.icon(
                       onPressed: () => setState(() => _editing = true),
                       icon: const Icon(Icons.edit),
@@ -619,7 +621,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                         setState(() => _editing = false);
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(svc.hasKey
+                            content: Text(svc.hasUserKey
                                 ? 'API key saved.'
                                 : 'API key cleared.'),
                           ),
@@ -629,7 +631,7 @@ class _AiTutorCardState extends State<_AiTutorCard> {
                       label: const Text('Save'),
                     ),
                   const SizedBox(width: 8),
-                  if (svc.hasKey)
+                  if (svc.hasUserKey)
                     TextButton.icon(
                       onPressed: () async {
                         await svc.setApiKey('');

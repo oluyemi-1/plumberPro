@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plumbing_and_heating/data/content_index.dart';
 import 'package:plumbing_and_heating/services/ai_tutor_service.dart';
 import 'package:plumbing_and_heating/services/purchase_proof.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,6 +60,48 @@ void main() {
     test('leaves ordinary text alone', () {
       const plain = 'Set the system to 1.5 bar cold, then bleed each radiator.';
       expect(AiTutorService.plainSpeech(plain), plain);
+    });
+  });
+
+  group('simulation tags', () {
+    const answer = 'Bleed it from the top.\n\n[sim:radiator_bleed]\n[sim:pressure_test] [sim:radiator_bleed]';
+
+    test('are extracted in order without repeats', () {
+      expect(AiTutorService.simulationTags(answer),
+          ['radiator_bleed', 'pressure_test']);
+      expect(AiTutorService.simulationTags('no tags here'), isEmpty);
+      expect(AiTutorService.simulationTags('[sim:Bad Id]'), isEmpty);
+    });
+
+    test('are removed from display text and speech', () {
+      expect(AiTutorService.withoutSimulationTags(answer),
+          'Bleed it from the top.');
+      expect(AiTutorService.plainSpeech(answer).contains('sim:'), isFalse);
+    });
+
+    test('catalogue appears in the system prompt only when supplied', () {
+      final svc = AiTutorService.instance;
+      final before = svc.systemText;
+      expect(before.contains('Simulations available'), isFalse);
+      svc.simulations = const [SimulationRef('radiator_bleed', 'Bleeding a radiator')];
+      final after = svc.systemText;
+      expect(after, startsWith(before));
+      expect(after, contains('radiator_bleed: Bleeding a radiator'));
+      expect(after, contains('[sim:id]'));
+      svc.simulations = const [];
+    });
+
+    test('content index exposes every simulation with a unique id', () {
+      final refs = simulationRefs();
+      expect(refs.length, greaterThan(40));
+      expect(refs.map((r) => r.id).toSet().length, refs.length);
+      final indexIds = buildContentIndex()
+          .where((e) => e.type == 'Simulation')
+          .map((e) => e.id)
+          .toSet();
+      for (final r in refs) {
+        expect(indexIds, contains('sim:${r.id}'));
+      }
     });
   });
 

@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'data/content_index.dart';
 import 'screens/splash_screen.dart';
+import 'services/ai_tutor_service.dart';
 import 'services/diagnostics_service.dart';
 import 'services/expense_service.dart';
 import 'services/iap_service.dart';
@@ -35,6 +37,7 @@ Future<void> main() async {
   await QuoteService.instance.ensureLoaded();
   await InventoryService.instance.ensureLoaded();
   await ProEntitlement.instance.ensureLoaded();
+  AiTutorService.instance.simulations = simulationRefs();
   // Connect to the store and re-sync any active subscription in the
   // background — must not block first paint, and tolerates being offline.
   unawaited(IapService.instance.init().then((_) {

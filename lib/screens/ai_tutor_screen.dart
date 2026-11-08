@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/content_index.dart';
 import '../services/ai_tutor_service.dart';
 import '../services/tts_service.dart';
 import '../theme.dart';
@@ -418,15 +419,19 @@ class _MessageBubble extends StatelessWidget {
               border: Border.all(color: border),
             ),
             child: SelectableText(
-              message.content,
+              isUser
+                  ? message.content
+                  : AiTutorService.withoutSimulationTags(message.content),
               style: TextStyle(color: fg, height: 1.4),
             ),
           ),
           if (!isUser)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   TextButton.icon(
                     onPressed: () =>
@@ -440,6 +445,9 @@ class _MessageBubble extends StatelessWidget {
                           const EdgeInsets.symmetric(horizontal: 8),
                     ),
                   ),
+                  for (final id
+                      in AiTutorService.simulationTags(message.content))
+                    _SimulationLink(id: id),
                 ],
               ),
             ),
@@ -552,6 +560,43 @@ class _InputBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// "Simulation: …" button for a `[sim:id]` tag in a tutor answer. Opens the
+/// matching content-index entry. Ids the catalogue does not know render
+/// nothing, so an invented tag never produces a dead button.
+class _SimulationLink extends StatelessWidget {
+  final String id;
+  const _SimulationLink({required this.id});
+
+  @override
+  Widget build(BuildContext context) {
+    SimulationRef? ref;
+    for (final s in AiTutorService.instance.simulations) {
+      if (s.id == id) ref = s;
+    }
+    if (ref == null) return const SizedBox.shrink();
+    final title = ref.title;
+    return OutlinedButton.icon(
+      onPressed: () {
+        for (final entry in buildContentIndex()) {
+          if (entry.id == 'sim:$id') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: entry.builder),
+            );
+            return;
+          }
+        }
+      },
+      icon: const Icon(Icons.play_circle_outline, size: 16),
+      label: Text('Simulation: $title'),
+      style: OutlinedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
       ),
     );
   }

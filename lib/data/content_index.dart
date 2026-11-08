@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/ai_tutor_service.dart';
 import '../theme.dart';
 
 // Data sources.
@@ -1069,3 +1070,8 @@ List<SearchEntry> buildContentIndex() {
 
   return out;
 }
+
+/// The simulations as lightweight (id, title) references, for the AI tutor's
+/// prompt catalogue. Ids match the `sim:` entries in [buildContentIndex].
+List<SimulationRef> simulationRefs() =>
+    [for (final s in _sims) SimulationRef(s.id, s.title)];

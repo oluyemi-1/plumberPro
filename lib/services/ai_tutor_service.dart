@@ -27,6 +27,15 @@ class AiMessage {
   });
 }
 
+/// A simulation the tutor may point users to. Supplied by the app at
+/// start-up from the content index, so the prompt never names a simulation
+/// that does not exist.
+class SimulationRef {
+  final String id;
+  final String title;
+  const SimulationRef(this.id, this.title);
+}
+
 /// Server-issued proof that this device's Pro subscription may use the
 /// included AI allowance, plus the latest counters the server reported.
 class AiEntitlement {
@@ -153,6 +162,10 @@ class AiTutorService extends ChangeNotifier {
   int _cacheHits = 0;
   final List<AiMessage> _messages = [];
   AiEntitlement? _entitlement;
+
+  /// Simulations the tutor may reference with `[sim:id]` tags. Set once at
+  /// start-up; the prompt catalogue is built from it.
+  List<SimulationRef> simulations = const [];
 
   String? get apiKey => _apiKey;
 
@@ -330,7 +343,7 @@ class AiTutorService extends ChangeNotifier {
         'system': [
           {
             'type': 'text',
-            'text': _systemPrompt,
+            'text': systemText,
             'cache_control': {'type': 'ephemeral'},
           },
         ],
@@ -498,9 +511,40 @@ class AiTutorService extends ChangeNotifier {
   /// Strips Markdown markers so text-to-speech does not read "asterisk"
   /// aloud: bold/italic markers, backticks, heading hashes and bullet dashes.
   static String plainSpeech(String text) => text
+      .replaceAll(_simTag, '')
       .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
       .replaceAll(RegExp(r'^\s*[-*•]\s+', multiLine: true), '')
       .replaceAll(RegExp(r'[*_`]'), '');
+
+  static final _simTag = RegExp(r'\[sim:([a-z0-9_]+)\]');
+
+  /// Simulation ids the model tagged in [text], in order, without repeats.
+  static List<String> simulationTags(String text) {
+    final ids = <String>[];
+    for (final m in _simTag.allMatches(text)) {
+      final id = m.group(1)!;
+      if (!ids.contains(id)) ids.add(id);
+    }
+    return ids;
+  }
+
+  /// [text] with its simulation tags removed, for display.
+  static String withoutSimulationTags(String text) =>
+      text.replaceAll(_simTag, '').replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
+
+  /// The tutor's system prompt: the fixed instructions plus the catalogue of
+  /// simulations the model may point to. Identical on every request so the
+  /// cache_control breakpoint keeps hitting.
+  String get systemText {
+    if (simulations.isEmpty) return _systemPrompt;
+    final lines = simulations.map((s) => '${s.id}: ${s.title}').join('\n');
+    return '$_systemPrompt\n'
+        'Simulations available in this app (id: title):\n$lines\n\n'
+        'When one of these directly demonstrates what you are explaining, end '
+        'your answer with a final line containing only the tag [sim:id], for '
+        'example [sim:radiator_bleed]. Use at most two tags, only ids from this '
+        'list, and no tag when none applies.\n';
+  }
 
   /// Fallback text when the model returned no text block.
   static String _emptyAnswer(Map<String, dynamic> json) =>

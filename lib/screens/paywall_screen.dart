@@ -284,8 +284,8 @@ class _Header extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             showRedeemHint
-                ? 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below, or redeem an activation code from your college, employer or training provider.'
-                : 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario. Subscribe below to get full access.',
+                ? 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario, plus the AI tutor. Subscribe below, or redeem an activation code from your college, employer or training provider.'
+                : 'PipeSmart Pro unlocks every lesson, quiz, simulator, troubleshooter and job scenario, plus the AI tutor. Subscribe below to get full access.',
             style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
           ),
         ],
@@ -301,6 +301,9 @@ class _FeatureList extends StatelessWidget {
     ('Full quiz library + practice mode', Icons.quiz_rounded),
     ('Every troubleshooter scenario', Icons.build_circle_rounded),
     ('All job scenarios with feedback', Icons.work_history_rounded),
+    // Mirrors MONTHLY_QUESTIONS on the proxy Worker.
+    ('AI tutor & photo diagnosis — 300 questions a month',
+        Icons.auto_awesome_rounded),
   ];
 
   @override

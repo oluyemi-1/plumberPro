@@ -47,6 +47,21 @@ void main() {
     });
   });
 
+  group('AiTutorService.plainSpeech', () {
+    test('removes bold, heading and bullet markers', () {
+      const md = '**1. Find the leak**\n- Check the PRV\n## Next\nUse `PTFE` tape *carefully*.';
+      expect(
+        AiTutorService.plainSpeech(md),
+        '1. Find the leak\nCheck the PRV\nNext\nUse PTFE tape carefully.',
+      );
+    });
+
+    test('leaves ordinary text alone', () {
+      const plain = 'Set the system to 1.5 bar cold, then bleed each radiator.';
+      expect(AiTutorService.plainSpeech(plain), plain);
+    });
+  });
+
   group('AiEntitlement', () {
     test('round-trips through JSON and computes remaining', () {
       final ent = AiEntitlement(

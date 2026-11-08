@@ -324,7 +324,7 @@ class AiTutorService extends ChangeNotifier {
     try {
       final body = {
         'model': requestModel,
-        'max_tokens': 1024,
+        'max_tokens': 2048,
         // System sent as an array so we can attach a cache_control block.
         // The system prompt is large and constant — caching it cuts cost.
         'system': [
@@ -367,7 +367,10 @@ class AiTutorService extends ChangeNotifier {
           buffer.write(block['text'] ?? '');
         }
       }
-      final answer = buffer.toString().trim();
+      var answer = buffer.toString().trim();
+      if (answer.isNotEmpty && json['stop_reason'] == 'max_tokens') {
+        answer = '$answer\n\n(Answer cut short. Say "continue" for the rest.)';
+      }
       _messages.add(AiMessage(
         role: 'assistant',
         content: answer.isEmpty ? _emptyAnswer(json) : answer,
@@ -417,7 +420,7 @@ class AiTutorService extends ChangeNotifier {
       final base64Image = base64Encode(imageBytes);
       final body = {
         'model': requestModel,
-        'max_tokens': 1024,
+        'max_tokens': 2048,
         'system': [
           {
             'type': 'text',
@@ -491,6 +494,13 @@ class AiTutorService extends ChangeNotifier {
     }
     return window;
   }
+
+  /// Strips Markdown markers so text-to-speech does not read "asterisk"
+  /// aloud: bold/italic markers, backticks, heading hashes and bullet dashes.
+  static String plainSpeech(String text) => text
+      .replaceAll(RegExp(r'^\s{0,3}#{1,6}\s*', multiLine: true), '')
+      .replaceAll(RegExp(r'^\s*[-*•]\s+', multiLine: true), '')
+      .replaceAll(RegExp(r'[*_`]'), '');
 
   /// Fallback text when the model returned no text block.
   static String _emptyAnswer(Map<String, dynamic> json) =>
@@ -682,6 +692,8 @@ Style:
 - Quote realistic figures (e.g. 1 to 1.5 bar cold for a sealed system, 60 °C cylinder, MCS 020 limit 42 dB(A), 110% bund rule, 750 mm minimum service pipe depth).
 - Cite the standard or regulation that applies when relevant.
 - End with a one-line safety note when the work is notifiable or dangerous.
+- Plain text only, no Markdown: no asterisks, hashes, backticks or bold. Write numbered steps as "1." and bullets as a dash. Answers are often read aloud.
+- Keep it under about 250 words unless the user asks for more detail.
 
 Constraints:
 - Never give specific gas burner pressures, bypasses or workarounds that suggest the user can carry out gas work without Gas Safe registration.
@@ -694,7 +706,7 @@ You are talking to a working plumber. Match an experienced time-served plumber's
   /// System prompt for one-shot photo diagnosis. Cached by the API for
   /// cost-efficiency.
   static const _diagnosisSystemPrompt = '''
-You are a UK plumbing fault-diagnosis expert. The user has supplied a photograph that may show a boiler display, a fault code, a fitting, a leak, a gauge, a pipework arrangement, an appliance data plate, a flue terminal, an oil tank, an LPG cylinder, a soil stack, a sprinkler head or a tool.
+You are a UK plumbing fault-diagnosis expert. The user has supplied a photograph that may show a boiler display, a fault code, a fitting, a leak, a gauge, a pipework arrangement, an appliance data plate, a flue terminal, an oil tank, an LPG cylinder, a soil stack, a sprinkler head or a tool. Reply in plain text with no Markdown markers such as asterisks, hashes or backticks; your reply may be read aloud.
 
 Your reply MUST follow this exact structure, using these section headings on their own lines:
 

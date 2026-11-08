@@ -93,7 +93,7 @@ class _PhotoDiagnosisScreenState extends State<PhotoDiagnosisScreen> {
       // Speak just the headlines for brevity — full text is on screen.
       final firstSection = _firstSentence(out);
       if (firstSection.isNotEmpty) {
-        TtsService.instance.speak(firstSection);
+        TtsService.instance.speak(AiTutorService.plainSpeech(firstSection));
       }
     }
   }
@@ -451,7 +451,8 @@ class _DiagnosisResult extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodyLarge),
               const SizedBox(height: 8),
               ElevatedButton.icon(
-                onPressed: () => TtsService.instance.speak(text),
+                onPressed: () =>
+                    TtsService.instance.speak(AiTutorService.plainSpeech(text)),
                 icon: const Icon(Icons.volume_up),
                 label: const Text('Speak'),
               ),
@@ -484,7 +485,8 @@ class _DiagnosisResult extends StatelessWidget {
                       tooltip: 'Speak this section',
                       icon: const Icon(Icons.volume_up, size: 20),
                       onPressed: () =>
-                          TtsService.instance.speak('$title. $body'),
+                          TtsService.instance.speak(
+                              AiTutorService.plainSpeech('$title. $body')),
                     ),
                   ]),
                   const SizedBox(height: 4),

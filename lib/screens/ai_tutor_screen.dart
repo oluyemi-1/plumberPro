@@ -56,7 +56,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       // Speak the latest assistant message.
       final last = AiTutorService.instance.messages.last;
       if (last.role == 'assistant') {
-        TtsService.instance.speak(last.content);
+        TtsService.instance.speak(AiTutorService.plainSpeech(last.content));
       }
     }
     _scrollToBottom();
@@ -430,7 +430,8 @@ class _MessageBubble extends StatelessWidget {
                 children: [
                   TextButton.icon(
                     onPressed: () =>
-                        TtsService.instance.speak(message.content),
+                        TtsService.instance
+                            .speak(AiTutorService.plainSpeech(message.content)),
                     icon: const Icon(Icons.volume_up, size: 16),
                     label: const Text('Speak'),
                     style: TextButton.styleFrom(

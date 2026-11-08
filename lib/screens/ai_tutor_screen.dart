@@ -77,7 +77,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI plumbing tutor'),
+        title: const Text('AI tutor'),
         actions: [
           AnimatedBuilder(
             animation: AiTutorService.instance,
@@ -106,6 +106,10 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
           AnimatedBuilder(
             animation: AiTutorService.instance,
             builder: (_, __) {
+              // Cache savings only matter when the user pays per token.
+              if (AiTutorService.instance.usingProxy) {
+                return const SizedBox.shrink();
+              }
               final cacheHits = AiTutorService.instance.cacheHits;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -189,6 +193,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                   focusNode: _focus,
                   busy: svc.busy,
                   enabled: svc.hasKey && !svc.needsPro,
+                  disabledHint: svc.needsPro
+                      ? 'Subscribe to PipeSmart Pro to start chatting'
+                      : 'Add an API key in Settings to start chatting',
                   onSend: () => _send(),
                 ),
               ],
@@ -482,12 +489,15 @@ class _InputBar extends StatelessWidget {
   final FocusNode focusNode;
   final bool busy;
   final bool enabled;
+  /// Placeholder shown while input is disabled, explaining how to enable it.
+  final String disabledHint;
   final VoidCallback onSend;
   const _InputBar({
     required this.controller,
     required this.focusNode,
     required this.busy,
     required this.enabled,
+    required this.disabledHint,
     required this.onSend,
   });
 
@@ -513,7 +523,7 @@ class _InputBar extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: enabled
                     ? 'Ask the tutor anything UK-plumbing related…'
-                    : 'Add an API key in Settings to start chatting',
+                    : disabledHint,
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),

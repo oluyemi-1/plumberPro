@@ -18,14 +18,15 @@
 <body>
 <header>
   <h1>PipeSmart — Privacy policy</h1>
-  <div class="sub">Published by Karitec · Last updated: 5 November 2026</div>
+  <div class="sub">Published by Karitec · Last updated: 10 November 2026</div>
   <nav><a href="terms.html">Terms of use</a></nav>
 </header>
 
 <h2>Summary in plain English</h2>
 <p>PipeSmart is a UK plumber's training and business app that runs almost entirely
-   on your device. We do not operate a server that collects your personal data.
-   The only data that leaves your device is:</p>
+   on your device. The only server we operate is a small relay for the AI
+   features, and it stores no message content. The only data that leaves your
+   device is:</p>
 <ul>
   <li>What you explicitly type or photograph for the optional AI tutor and photo
       fault diagnosis features. For Pro subscribers this is relayed through a
@@ -49,6 +50,8 @@
   <li>Bookmarks, quiz scores, checklist progress, spaced-repetition state</li>
   <li>Voice / text-to-speech preferences</li>
   <li>Your Anthropic API key, if you provide one</li>
+  <li>For Pro subscribers, your store purchase proof and a short-lived
+      allowance token used by the AI tutor (see "AI features" below)</li>
   <li>An in-app diagnostics log (recent errors / warnings) used for troubleshooting</li>
 </ul>
 <p>None of this is uploaded to any server we operate.</p>
@@ -61,7 +64,8 @@
   <li>Scan receipts — the text is read on-device using Google ML Kit, no image
       leaves the device</li>
   <li>Use the optional photo fault diagnosis — and only when you actively tap
-      <em>Analyse</em>, the image is sent to Anthropic for analysis</li>
+      <em>Analyse</em>, the image is sent to Anthropic for analysis (via our
+      relay for Pro subscribers, see "AI features" below)</li>
 </ul>
 
 <h2>Microphone</h2>
@@ -145,8 +149,15 @@
 
 <h2>Data retention</h2>
 <p>Data you create stays on your device until you delete it or uninstall the
-   app. We have no separate retention policy because we do not store your
-   data on our servers.</p>
+   app. We do not store your records, messages or photos on any server.</p>
+<p>The AI relay keeps only the subscription-derived identifier, plan name and
+   monthly question count described above, and these expire automatically
+   about 40 days after the month ends.</p>
+<p>Anthropic states that it deletes API inputs and outputs from its systems
+   within 30 days of receipt, except where its automated systems flag a
+   request as a violation of its Usage Policy (retained for up to two years)
+   or where retention is required by law. See
+   <a href="https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data">Anthropic's retention notice</a>.</p>
 
 <h2>Contact</h2>
 <p>Karitec is the publisher of PipeSmart. For privacy or data-protection
